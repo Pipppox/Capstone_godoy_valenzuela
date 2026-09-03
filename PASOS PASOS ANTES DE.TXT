@@ -1,0 +1,12 @@
+Entorno virtual 
+python -m venv .venv
+.\.venv\Scripts\activate -> para activar el entorno
+deactivate -> para salir del entorno
+
+-----------------------------------------------------
+INSTALAR EL FLET CON 
+pip install flet
+-----------------------------------------------------
+
+Para ejecutar el proyecto...
+python src/main.py

@@ -1,26 +1,13 @@
 import flet as ft
-
+from views.login_view import login_view
 
 def main(page: ft.Page):
-    counter = ft.Text("0", size=50, data=0)
+    page.title = "Stockin - Login"
+    page.theme_mode = ft.ThemeMode.DARK
+    page.bgcolor = ft.Colors.BLACK
+    page.padding = 0
 
-    def increment_click(e: ft.Event[ft.FloatingActionButton]):
-        counter.data += 1
-        counter.value = str(counter.data)
-
-    page.floating_action_button = ft.FloatingActionButton(
-        icon=ft.Icons.ADD, key="increment", on_click=increment_click
-    )
-    page.add(
-        ft.SafeArea(
-            expand=True,
-            content=ft.Container(
-                content=counter,
-                alignment=ft.Alignment.CENTER,
-            ),
-        )
-    )
-
+    page.add(login_view(page))
 
 if __name__ == "__main__":
     ft.run(main)
