@@ -1,50 +1,49 @@
 import flet as ft
 
 def login_view(page: ft.Page):
-    # 1. Ilustración central
+    # Ilustración central
     ilustracion = ft.Container(
-        content=ft.Column(
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            alignment=ft.MainAxisAlignment.CENTER,
-        ),
-        width=280,
+    content=ft.Image(
+        src="logo sin fondo.png",
+        width=260,
         height=220,
-        bgcolor=ft.Colors.GREY_900,
-        border_radius=20,
-        alignment=ft.Alignment.CENTER,
+        fit=ft.BoxFit.CONTAIN, 
+    ),
+    width=280,
+    height=220,
+    alignment=ft.Alignment.CENTER,
     )
-
-    # 2. Título "StockIN"
+    # Título 
     titulo_brand = ft.Row(
         controls=[
-            ft.Text("Stock", size=36, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
-            ft.Text("IN", size=36, weight=ft.FontWeight.BOLD, color=ft.Colors.ORANGE_500),
+            ft.Text("Stock", size=35, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+            ft.Text("IN", size=35, weight=ft.FontWeight.BOLD, color=ft.Colors.ORANGE_800),
         ],
-        alignment=ft.MainAxisAlignment.CENTER,
+        alignment=ft.MainAxisAlignment.START,
         spacing=0,
     )
 
-    # 3. Slogan
+    # Slogan
     slogan = ft.Column(
         controls=[
-            ft.Text("'Nunca te quedes", size=26, weight=ft.FontWeight.W_600, color=ft.Colors.WHITE),
+            ft.Text("'Nunca te quedes", size=34, weight=ft.FontWeight.W_600, color=ft.Colors.WHITE),
             ft.Row(
                 controls=[
-                    ft.Text("OUT ", size=28, weight=ft.FontWeight.BOLD, color=ft.Colors.ORANGE_500),
-                    ft.Text("de Stock\"", size=26, weight=ft.FontWeight.W_600, color=ft.Colors.WHITE),
+                    ft.Text("OUT ", size=34, weight=ft.FontWeight.BOLD, color=ft.Colors.ORANGE_800),
+                    ft.Text("de Stock\"", size=34, weight=ft.FontWeight.W_600, color=ft.Colors.WHITE),
                 ],
-                alignment=ft.MainAxisAlignment.CENTER,
+                alignment=ft.MainAxisAlignment.START,
                 spacing=0,
             ),
         ],
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        horizontal_alignment=ft.CrossAxisAlignment.START,
         spacing=0,
     )
 
-    # 4. Botones
+    # Botones
     btn_email = ft.ElevatedButton(
         content=ft.Text("Iniciar Sesión con Email", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
-        bgcolor=ft.Colors.BLUE_600,
+        bgcolor=ft.Colors.ORANGE_800,
         width=280,
         height=48,
         style=ft.ButtonStyle(
@@ -79,7 +78,7 @@ def login_view(page: ft.Page):
         spacing=10,
     )
 
-    # 5. Tarjeta Celular
+    # Tarjeta Celular
     tarjeta_movil = ft.Container(
         content=ft.Column(
             controls=[

@@ -10,3 +10,21 @@ pip install flet
 
 Para ejecutar el proyecto...
 python src/main.py
+
+======================
+pa ingresar mas rapido a la carpeta xd
+
+cd Capstone_godoy_valenzuela
+
+cd proyecto
+
+cd my-app
+
+----------------------
+
+flet run -r src/main.py 
+
+COMANDO PARA PODER EJECUTAR EL PROYECTO EN TIEMPO REAL
+
+-----------------------
+
