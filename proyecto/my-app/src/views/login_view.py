@@ -40,8 +40,8 @@ def login_view(page: ft.Page):
         spacing=0,
     )
 
-    # Botones
-    btn_email = ft.ElevatedButton(
+        # Botones
+    btn_email = ft.Button(
         content=ft.Text("Iniciar Sesión con Email", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
         bgcolor=ft.Colors.ORANGE_800,
         width=280,
@@ -52,30 +52,26 @@ def login_view(page: ft.Page):
         on_click=lambda _: print("Clic en Login Email"),
     )
 
-    btn_google = ft.OutlinedButton(
-        content=ft.Text("Google", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
-        width=135,
-        height=45,
+    btn_telefono = ft.Button(
+        content=ft.Text("Iniciar Sesión con Teléfono", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+        bgcolor=ft.Colors.GREY_700,
+        width=280,
+        height=48,
         style=ft.ButtonStyle(
-            shape=ft.RoundedRectangleBorder(radius=20),
-            side=ft.BorderSide(1, ft.Colors.GREY_700),
+            shape=ft.RoundedRectangleBorder(radius=25),
         ),
+        on_click=lambda _: print("Clic en Login Teléfono"),
     )
 
-    btn_apple = ft.OutlinedButton(
-        content=ft.Text("Apple ID", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
-        width=135,
-        height=45,
+    btn_crear_cuenta = ft.Button(
+        content=ft.Text("Crea tu Cuenta", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+        bgcolor=ft.Colors.GREY_500,
+        width=280,
+        height=48,
         style=ft.ButtonStyle(
-            shape=ft.RoundedRectangleBorder(radius=20),
-            side=ft.BorderSide(1, ft.Colors.GREY_700),
+            shape=ft.RoundedRectangleBorder(radius=25),
         ),
-    )
-
-    fila_social = ft.Row(
-        controls=[btn_google, btn_apple],
-        alignment=ft.MainAxisAlignment.CENTER,
-        spacing=10,
+        on_click=lambda _: print("Clic en Crear Cuenta"),
     )
 
     # Tarjeta Celular
@@ -88,10 +84,12 @@ def login_view(page: ft.Page):
                 slogan,
                 ft.Divider(height=15, color=ft.Colors.TRANSPARENT),
                 btn_email,
-                fila_social,
+                btn_telefono,
+                btn_crear_cuenta,
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+            spacing=12,
         ),
         width=360,
         height=680,

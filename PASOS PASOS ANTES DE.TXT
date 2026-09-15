@@ -2,7 +2,7 @@ Entorno virtual
 python -m venv .venv
 .\.venv\Scripts\activate -> para activar el entorno
 deactivate -> para salir del entorno
-
+EN LA CARPETA DE PROYECTO INSTALAMOS EL ENTORNO VIRTUAL Y LO ACTIVAMOS
 -----------------------------------------------------
 INSTALAR EL FLET CON 
 pip install flet
