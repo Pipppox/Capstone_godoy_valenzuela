@@ -1,3 +1,14 @@
+Pasos si o si a seguir cuando clonamos el repositorio
+
+cd Capstone_godoy_valenzuela
+cd proyecto
+pip install flet
+python -m venv .venv
+.\.venv\Scripts\activate -> para activar el entorno
+cd my-app
+pip install flet
+deactivate -> para salir del entorno
+-----------------------------------------------------
 Entorno virtual 
 python -m venv .venv
 .\.venv\Scripts\activate -> para activar el entorno
@@ -27,4 +38,3 @@ flet run -r src/main.py
 COMANDO PARA PODER EJECUTAR EL PROYECTO EN TIEMPO REAL
 
 -----------------------
-
