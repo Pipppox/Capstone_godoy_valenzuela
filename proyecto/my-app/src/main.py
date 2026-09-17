@@ -3,8 +3,10 @@ from views.login_view import login_view
 from views.crear_cuenta_view import crear_cuenta_view
 from views.iniciar_sesion_email_view import iniciar_sesion_email_view
 from views.iniciar_sesion_celu_view import iniciar_sesion_celu_view
+from database.db import init_db
 
 def main(page: ft.Page):
+    init_db()
     page.title = "StockIN"
     page.theme_mode = ft.ThemeMode.DARK
     page.bgcolor = ft.Colors.BLACK
