@@ -1,19 +1,29 @@
 import flet as ft
 
+
 def login_view(page: ft.Page):
+    # Navegación
+    async def ir_a_crear_cuenta(e):
+        await page.push_route("/crear_cuenta")
+    async def ir_a_iniciar_sesion_email(e):
+        await page.push_route("/iniciar_sesion_email")
+    async def ir_a_iniciar_sesion_celu(e):
+        await page.push_route("/iniciar_sesion_celu")
+
     # Ilustración central
     ilustracion = ft.Container(
-    content=ft.Image(
-        src="logo sin fondo.png",
-        width=260,
+        content=ft.Image(
+            src="logo sin fondo.png",
+            width=260,
+            height=220,
+            fit=ft.BoxFit.CONTAIN,
+        ),
+        width=280,
         height=220,
-        fit=ft.BoxFit.CONTAIN, 
-    ),
-    width=280,
-    height=220,
-    alignment=ft.Alignment.CENTER,
+        alignment=ft.Alignment.CENTER,
     )
-    # Título 
+
+    # Título
     titulo_brand = ft.Row(
         controls=[
             ft.Text("Stock", size=35, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
@@ -40,7 +50,7 @@ def login_view(page: ft.Page):
         spacing=0,
     )
 
-        # Botones
+    # Botones
     btn_email = ft.Button(
         content=ft.Text("Iniciar Sesión con Email", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
         bgcolor=ft.Colors.ORANGE_800,
@@ -49,7 +59,7 @@ def login_view(page: ft.Page):
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=25),
         ),
-        on_click=lambda _: print("Clic en Login Email"),
+        on_click=ir_a_iniciar_sesion_email,
     )
 
     btn_telefono = ft.Button(
@@ -60,7 +70,7 @@ def login_view(page: ft.Page):
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=25),
         ),
-        on_click=lambda _: print("Clic en Login Teléfono"),
+        on_click=ir_a_iniciar_sesion_celu,
     )
 
     btn_crear_cuenta = ft.Button(
@@ -71,7 +81,7 @@ def login_view(page: ft.Page):
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=25),
         ),
-        on_click=lambda _: print("Clic en Crear Cuenta"),
+        on_click=ir_a_crear_cuenta,
     )
 
     # Tarjeta Celular
