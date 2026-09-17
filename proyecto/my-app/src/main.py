@@ -1,9 +1,13 @@
 import flet as ft
+
+from database.db import init_db
+from services import sesion
 from views.login_view import login_view
 from views.crear_cuenta_view import crear_cuenta_view
 from views.iniciar_sesion_email_view import iniciar_sesion_email_view
 from views.iniciar_sesion_celu_view import iniciar_sesion_celu_view
-from database.db import init_db
+from views.index_view import index_view
+
 
 def main(page: ft.Page):
     init_db()
@@ -12,32 +16,49 @@ def main(page: ft.Page):
     page.bgcolor = ft.Colors.BLACK
     page.padding = 0
 
-    # Mapa de rutas -> función que construye la vista
-    rutas = {
+    # Rutas sin sesión (se apilan sobre el login)
+    rutas_publicas = {
         "/": login_view,
         "/crear_cuenta": crear_cuenta_view,
         "/iniciar_sesion_email": iniciar_sesion_email_view,
         "/iniciar_sesion_celu": iniciar_sesion_celu_view,
     }
 
-    def construir_view(route: str) -> ft.View:
+    # Rutas que requieren sesión (se apilan sobre el index)
+    rutas_privadas = {
+        "/index": index_view,
+    }
+
+    def construir_view(route: str, builder) -> ft.View:
         return ft.View(
             route=route,
-            controls=[rutas[route](page)],
+            controls=[builder(page)],
             bgcolor=ft.Colors.BLACK,
             padding=0,
         )
 
     def route_change(e=None):
         page.views.clear()
-        page.views.append(construir_view("/"))          # login siempre abajo
-        if page.route != "/" and page.route in rutas:
-            page.views.append(construir_view(page.route))  # vista actual encima
+        ruta = page.route
+
+        if ruta in rutas_privadas:
+            if not sesion.activa():
+                # Sin sesión: se muestra el login
+                page.views.append(construir_view("/", login_view))
+            else:
+                page.views.append(construir_view("/index", index_view))
+                if ruta != "/index":
+                    page.views.append(construir_view(ruta, rutas_privadas[ruta]))
+        else:
+            page.views.append(construir_view("/", login_view))
+            if ruta != "/" and ruta in rutas_publicas:
+                page.views.append(construir_view(ruta, rutas_publicas[ruta]))
+
         page.update()
 
     async def view_pop(e):
-        # Botón atrás del celular / navegador
-        if e.view is not None:
+        # Botón atrás: no se sale de la vista base (login o index)
+        if e.view is not None and len(page.views) > 1:
             page.views.remove(e.view)
             await page.push_route(page.views[-1].route)
 

@@ -65,22 +65,27 @@ def registrar_usuario(nombre, apellido, email, telefono, password) -> None:
                VALUES (?, ?, ?, ?, ?, ?)""",
             (nombre, apellido, email, telefono, password_hash, salt.hex()),
         )
+        print(f"[REGISTRO] Guardado: {email} / {telefono}")
 
 
 # ---------- Login (listo para las vistas de inicio de sesión) ----------
 def _login(columna: str, valor: str, password: str) -> dict | None:
+    print(f"[LOGIN] Buscando {columna} = {valor!r}")
     with conexion() as conn:
         fila = conn.execute(
             f"SELECT * FROM usuarios WHERE {columna} = ?", (valor,)
         ).fetchone()
 
     if fila is None:
+        print("[LOGIN] No existe un usuario con ese dato")
         return None
 
     hash_ingresado = _hashear(password or "", bytes.fromhex(fila["salt"]))
     if not hmac.compare_digest(hash_ingresado, fila["password_hash"]):
+        print("[LOGIN] Usuario encontrado, pero la contraseña no coincide")
         return None
 
+    print("[LOGIN] OK")
     usuario = dict(fila)
     usuario.pop("password_hash")
     usuario.pop("salt")

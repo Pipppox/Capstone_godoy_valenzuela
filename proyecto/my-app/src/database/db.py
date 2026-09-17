@@ -3,9 +3,23 @@ import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
-# En el celular Flet entrega una carpeta propia de la app; en tu PC se usa src/storage
-_carpeta = os.getenv("FLET_APP_STORAGE_DATA") or str(Path(__file__).resolve().parent.parent / "storage")
-DB_PATH = Path(_carpeta) / "stockin.db"
+SRC_DIR = Path(__file__).resolve().parent.parent   # .../my-app/src
+PROYECTO_DIR = SRC_DIR.parent                       # .../my-app
+
+
+def _carpeta_datos() -> Path:
+    """En el celular usa la carpeta que entrega Flet.
+    En desarrollo, si esa carpeta cae dentro de src/, usa my-app/storage
+    para que la recarga automática (-r) no reinicie la app al guardar."""
+    env = os.getenv("FLET_APP_STORAGE_DATA")
+    if env:
+        ruta = Path(env).resolve()
+        if not ruta.is_relative_to(SRC_DIR):
+            return ruta
+    return PROYECTO_DIR / "storage"
+
+
+DB_PATH = _carpeta_datos() / "stockin.db"
 
 
 @contextmanager
@@ -35,3 +49,6 @@ def init_db():
                 creado_en     TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
             )
         """)
+        filas = conn.execute("SELECT id, email, telefono FROM usuarios").fetchall()
+        print(f"[DB] Archivo: {DB_PATH}")
+        print(f"[DB] Usuarios registrados: {[dict(f) for f in filas]}")
