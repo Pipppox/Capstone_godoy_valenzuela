@@ -7,6 +7,9 @@ from views.crear_cuenta_view import crear_cuenta_view
 from views.iniciar_sesion_email_view import iniciar_sesion_email_view
 from views.iniciar_sesion_celu_view import iniciar_sesion_celu_view
 from views.index_view import index_view
+from views.inventario_view import inventario_view
+from views.agregar_view import agregar_view
+from views.vender_view import vender_view
 
 
 def main(page: ft.Page):
@@ -27,6 +30,9 @@ def main(page: ft.Page):
     # Rutas que requieren sesión (se apilan sobre el index)
     rutas_privadas = {
         "/index": index_view,
+        "/inventario": inventario_view,
+        "/agregar": agregar_view,
+        "/vender": vender_view,
     }
 
     def construir_view(route: str, builder) -> ft.View:
@@ -40,19 +46,27 @@ def main(page: ft.Page):
     def route_change(e=None):
         page.views.clear()
         ruta = page.route
+        print(f"[RUTA] {ruta} | sesión activa: {sesion.activa()}")
 
         if ruta in rutas_privadas:
             if not sesion.activa():
-                # Sin sesión: se muestra el login
+                print("[RUTA] Sin sesión -> se muestra el login")
                 page.views.append(construir_view("/", login_view))
             else:
                 page.views.append(construir_view("/index", index_view))
                 if ruta != "/index":
                     page.views.append(construir_view(ruta, rutas_privadas[ruta]))
-        else:
+        elif ruta in rutas_publicas:
             page.views.append(construir_view("/", login_view))
-            if ruta != "/" and ruta in rutas_publicas:
+            if ruta != "/":
                 page.views.append(construir_view(ruta, rutas_publicas[ruta]))
+        else:
+            # Ruta desconocida: falta agregarla a alguno de los diccionarios
+            print(f"[RUTA] '{ruta}' no está registrada en rutas_publicas ni rutas_privadas")
+            destino = "/index" if sesion.activa() else "/"
+            page.views.append(
+                construir_view(destino, index_view if sesion.activa() else login_view)
+            )
 
         page.update()
 
@@ -68,4 +82,4 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    ft.run(main, assets_dir="src/assets")
+    ft.run(main, assets_dir="assets")

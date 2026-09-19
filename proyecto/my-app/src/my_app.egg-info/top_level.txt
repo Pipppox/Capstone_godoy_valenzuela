@@ -1,0 +1,4 @@
+assets
+components
+main
+views
