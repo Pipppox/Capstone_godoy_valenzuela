@@ -49,6 +49,37 @@ def init_db():
                 creado_en     TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS productos (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                usuario_id INTEGER NOT NULL,
+                codigo     TEXT NOT NULL,
+                nombre     TEXT NOT NULL,
+                categoria  TEXT NOT NULL,
+                precio     INTEGER NOT NULL,
+                stock      INTEGER NOT NULL,
+                creado_en  TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+                UNIQUE (usuario_id, codigo),
+                FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS ventas (
+                id             INTEGER PRIMARY KEY AUTOINCREMENT,
+                usuario_id     INTEGER NOT NULL,
+                producto_id    INTEGER NOT NULL,
+                cantidad       INTEGER NOT NULL,
+                precio_unitario INTEGER NOT NULL,
+                total          INTEGER NOT NULL,
+                lugar          TEXT,
+                fecha          TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+                FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+                FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE CASCADE
+            )
+        """)
         filas = conn.execute("SELECT id, email, telefono FROM usuarios").fetchall()
         print(f"[DB] Archivo: {DB_PATH}")
         print(f"[DB] Usuarios registrados: {[dict(f) for f in filas]}")
+
+
+        

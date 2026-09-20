@@ -1,0 +1,12 @@
+README.md
+pyproject.toml
+src/main.py
+src/components/metric_card.py
+src/my_app.egg-info/PKG-INFO
+src/my_app.egg-info/SOURCES.txt
+src/my_app.egg-info/dependency_links.txt
+src/my_app.egg-info/requires.txt
+src/my_app.egg-info/top_level.txt
+src/views/index_view.py
+src/views/login_view.py
+tests/test_main.py
