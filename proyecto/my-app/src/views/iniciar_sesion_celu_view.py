@@ -1,14 +1,14 @@
 import flet as ft
 
 from services import sesion
-from services.auth import login_con_email
+from services.auth import login_con_telefono
 
 
 def iniciar_sesion_celu_view(page: ft.Page):
     async def volver_login(e):
         await page.push_route("/")
 
-    txt_email = ft.TextField(
+    txt_celular = ft.TextField(
         label="Numero telefonico",
         border_color=ft.Colors.GREY_700,
         color=ft.Colors.WHITE,
@@ -25,14 +25,14 @@ def iniciar_sesion_celu_view(page: ft.Page):
     mensaje = ft.Text("", size=13, color=ft.Colors.RED_400, text_align=ft.TextAlign.CENTER)
 
     async def ingresar(e):
-        if not txt_email.value or not txt_password.value:
-            mensaje.value = "Ingresa tu correo y contraseña."
+        if not txt_celular.value or not txt_password.value:
+            mensaje.value = "Ingresa tu Numero telefonico y contraseña."
             page.update()
             return
 
-        usuario = login_con_email(txt_email.value, txt_password.value)
+        usuario = login_con_telefono(txt_celular.value, txt_password.value)
         if usuario is None:
-            mensaje.value = "Correo o contraseña incorrectos."
+            mensaje.value = "Numero telefonico o contraseña incorrectos."
             txt_password.value = ""
             page.update()
             return
@@ -58,7 +58,7 @@ def iniciar_sesion_celu_view(page: ft.Page):
                     alignment=ft.MainAxisAlignment.START,
                 ),
                 ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
-                txt_email,
+                txt_celular,
                 txt_password,
                 mensaje,
                 ft.Button(
