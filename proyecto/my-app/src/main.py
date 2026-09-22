@@ -10,7 +10,7 @@ from views.index_view import index_view
 from views.inventario_view import inventario_view
 from views.agregar_view import agregar_view
 from views.vender_view import vender_view
-
+from views.restablecer_contra_view import restablecer_contra_view
 
 def main(page: ft.Page):
     init_db()
@@ -25,6 +25,7 @@ def main(page: ft.Page):
         "/crear_cuenta": crear_cuenta_view,
         "/iniciar_sesion_email": iniciar_sesion_email_view,
         "/iniciar_sesion_celu": iniciar_sesion_celu_view,
+        "/restablecer_contra": restablecer_contra_view,
     }
 
     # Rutas que requieren sesión (se apilan sobre el index)

@@ -2,29 +2,13 @@ import asyncio
 
 import flet as ft
 
-from services.auth import registrar_usuario
+from services.auth import restablecer_password
 
 
-def crear_cuenta_view(page: ft.Page):
-    async def volver_login(e):
+def restablecer_contra_view(page: ft.Page):
+    async def volver(e):
         await page.push_route("/")
 
-    async def ir_a_restablecer(e):
-        await page.push_route("/restablecer_contra")
-
-    # Campos
-    txt_nombre = ft.TextField(
-        label="Nombre",
-        border_color=ft.Colors.GREY_700,
-        color=ft.Colors.WHITE,
-        capitalization=ft.TextCapitalization.WORDS,
-    )
-    txt_apellido = ft.TextField(
-        label="Apellido",
-        border_color=ft.Colors.GREY_700,
-        color=ft.Colors.WHITE,
-        capitalization=ft.TextCapitalization.WORDS,
-    )
     txt_email = ft.TextField(
         label="Correo electrónico",
         border_color=ft.Colors.GREY_700,
@@ -33,12 +17,13 @@ def crear_cuenta_view(page: ft.Page):
     )
     txt_telefono = ft.TextField(
         label="Numero telefonico",
+        hint_text="912345678",
         border_color=ft.Colors.GREY_700,
         color=ft.Colors.WHITE,
         keyboard_type=ft.KeyboardType.PHONE,
     )
-    txt_password = ft.TextField(
-        label="Contraseña",
+    txt_nueva_password = ft.TextField(
+        label="Nueva contraseña",
         password=True,
         can_reveal_password=True,
         border_color=ft.Colors.GREY_700,
@@ -47,15 +32,13 @@ def crear_cuenta_view(page: ft.Page):
 
     mensaje = ft.Text("", size=13, color=ft.Colors.RED_400, text_align=ft.TextAlign.CENTER)
 
-    async def registrar(e):
+    async def restablecer(e):
         mensaje.color = ft.Colors.RED_400
         try:
-            registrar_usuario(
-                txt_nombre.value,
-                txt_apellido.value,
+            restablecer_password(
                 txt_email.value,
                 txt_telefono.value,
-                txt_password.value,
+                txt_nueva_password.value,
             )
         except ValueError as err:
             mensaje.value = str(err)
@@ -63,21 +46,13 @@ def crear_cuenta_view(page: ft.Page):
             return
 
         mensaje.color = ft.Colors.GREEN_400
-        mensaje.value = "¡Cuenta creada! Ya puedes iniciar sesión."
-        btn_registrar.disabled = True
+        mensaje.value = "Contraseña actualizada. Ya puedes iniciar sesión."
         page.update()
 
         await asyncio.sleep(1.5)
         await page.push_route("/iniciar_sesion_email")
 
-    btn_registrar = ft.Button(
-        content=ft.Text("Registrarse", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
-        bgcolor=ft.Colors.ORANGE_800,
-        width=280,
-        height=48,
-        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=25)),
-        on_click=registrar,
-    )
+    txt_nueva_password.on_submit = restablecer
 
     contenido = ft.Container(
         content=ft.Column(
@@ -87,23 +62,28 @@ def crear_cuenta_view(page: ft.Page):
                         ft.IconButton(
                             icon=ft.Icons.ARROW_BACK,
                             icon_color=ft.Colors.WHITE,
-                            on_click=volver_login,
+                            on_click=volver,
                         ),
-                        ft.Text("Crear Cuenta", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                        ft.Text("Restablecer Contraseña", size=20,
+                                weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
                     ],
                     alignment=ft.MainAxisAlignment.START,
                 ),
-                txt_nombre,
-                txt_apellido,
+                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+                ft.Text("Ingresa tu correo y teléfono para verificar tu identidad.",
+                        size=12, color=ft.Colors.GREY_400),
+                ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
                 txt_email,
                 txt_telefono,
-                txt_password,
+                txt_nueva_password,
                 mensaje,
-                btn_registrar,
-                ft.TextButton(
-                    content=ft.Text("¿Ya tienes cuenta? Restablece tu contraseña",
-                                    size=12, color=ft.Colors.GREY_400),
-                    on_click=ir_a_restablecer,
+                ft.Button(
+                    content=ft.Text("Restablecer", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                    bgcolor=ft.Colors.ORANGE_800,
+                    width=280,
+                    height=48,
+                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=25)),
+                    on_click=restablecer,
                 ),
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
