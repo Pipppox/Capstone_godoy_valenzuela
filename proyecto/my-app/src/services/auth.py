@@ -98,3 +98,31 @@ def login_con_email(email: str, password: str) -> dict | None:
 
 def login_con_telefono(telefono: str, password: str) -> dict | None:
     return _login("telefono", normalizar_telefono(telefono), password)
+
+def restablecer_password(email: str, telefono: str, nueva_password: str) -> None:
+    """Cambia la contraseña si email + teléfono coinciden."""
+    email = normalizar_email(email)
+    telefono = normalizar_telefono(telefono)
+
+    if not email or not telefono or not nueva_password:
+        raise ValueError("Completa todos los campos.")
+
+    if len(nueva_password) < 8:
+        raise ValueError("La contraseña debe tener al menos 8 caracteres.")
+
+    with conexion() as conn:
+        fila = conn.execute(
+            "SELECT id FROM usuarios WHERE email = ? AND telefono = ?",
+            (email, telefono),
+        ).fetchone()
+
+        if fila is None:
+            raise ValueError("No se encontró una cuenta con esos datos.")
+
+        salt = secrets.token_bytes(16)
+        password_hash = _hashear(nueva_password, salt)
+
+        conn.execute(
+            "UPDATE usuarios SET password_hash = ?, salt = ? WHERE id = ?",
+            (password_hash, salt.hex(), fila["id"]),
+        )
