@@ -44,8 +44,8 @@ def index_view(page: ft.Page):
 
     saludo = ft.Column(
         controls=[
-            ft.Text("Hello", size=30, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
-            ft.Text(f'"{nombre}"', size=30, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+            ft.Text("Hola", size=30, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+            ft.Text(f'{nombre}', size=30, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
         ],
         spacing=0,
     )
