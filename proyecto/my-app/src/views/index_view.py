@@ -19,6 +19,9 @@ def index_view(page: ft.Page):
     async def cerrar_sesion(e):
         sesion.cerrar()
         await page.push_route("/")
+
+    async def ir_a_eliminar_cuenta(e):
+        await page.push_route("/eliminar_cuenta")        
         
     async def ir_a_inventario(e):
         await page.push_route("/inventario")
@@ -210,9 +213,13 @@ def index_view(page: ft.Page):
                             spacing=14,
                             vertical_alignment=ft.CrossAxisAlignment.START,
                         ),
-                        ft.TextButton(
+                                                ft.TextButton(
                             content=ft.Text("Cerrar sesión", size=12, color=ft.Colors.GREY_500),
                             on_click=cerrar_sesion,
+                        ),
+                        ft.TextButton(
+                            content=ft.Text("Eliminar cuenta", size=12, color=ft.Colors.RED_400),
+                            on_click=ir_a_eliminar_cuenta,
                         ),
                     ],
                     spacing=12,
