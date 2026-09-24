@@ -126,3 +126,26 @@ def restablecer_password(email: str, telefono: str, nueva_password: str) -> None
             "UPDATE usuarios SET password_hash = ?, salt = ? WHERE id = ?",
             (password_hash, salt.hex(), fila["id"]),
         )
+
+def eliminar_cuenta(email: str, password: str) -> None:
+    """Elimina la cuenta si la contraseña es correcta."""
+    email = normalizar_email(email)
+
+    if not email or not password:
+        raise ValueError("Ingresa tu correo y contraseña.")
+
+    with conexion() as conn:
+        fila = conn.execute(
+            "SELECT * FROM usuarios WHERE email = ?", (email,)
+        ).fetchone()
+
+        if fila is None:
+            raise ValueError("Cuenta no encontrada.")
+
+        hash_ingresado = _hashear(password, bytes.fromhex(fila["salt"]))
+        if not hmac.compare_digest(hash_ingresado, fila["password_hash"]):
+            raise ValueError("Contraseña incorrecta.")
+
+        conn.execute("DELETE FROM ventas WHERE usuario_id = ?", (fila["id"],))
+        conn.execute("DELETE FROM productos WHERE usuario_id = ?", (fila["id"],))
+        conn.execute("DELETE FROM usuarios WHERE id = ?", (fila["id"],))        

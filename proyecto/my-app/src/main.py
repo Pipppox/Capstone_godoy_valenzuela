@@ -11,6 +11,7 @@ from views.inventario_view import inventario_view
 from views.agregar_view import agregar_view
 from views.vender_view import vender_view
 from views.restablecer_contra_view import restablecer_contra_view
+from views.eliminar_cta_view import eliminar_cuenta_view
 
 def main(page: ft.Page):
     init_db()
@@ -34,6 +35,7 @@ def main(page: ft.Page):
         "/inventario": inventario_view,
         "/agregar": agregar_view,
         "/vender": vender_view,
+        "/eliminar_cuenta": eliminar_cuenta_view,
     }
 
     def construir_view(route: str, builder) -> ft.View:
