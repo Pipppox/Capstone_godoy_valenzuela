@@ -16,15 +16,22 @@ def index_view(page: ft.Page):
             print(f"[AVISO] {nombre_vista}: próximamente")
         return _handler
 
-    async def cerrar_sesion(e):
+    async def confirmar_logout(e):
         sesion.cerrar()
         await page.push_route("/")
 
-    async def ir_a_eliminar_cuenta(e):
-        await page.push_route("/eliminar_cuenta")        
-        
-    async def ir_a_inventario(e):
-        await page.push_route("/inventario")
+    def mostrar_confirmar_logout(e):
+        panel_principal.visible = False
+        panel_confirmar_logout.visible = True
+        page.update()
+
+    def cancelar_logout(e):
+        panel_confirmar_logout.visible = False
+        panel_principal.visible = True
+        page.update()
+
+    async def ir_a_perfil(e):
+        await page.push_route("/perfil_usuario")
 
     # ---------- Encabezado ----------
     encabezado = ft.Row(
@@ -35,7 +42,7 @@ def index_view(page: ft.Page):
                 icon_color=ft.Colors.GREY_500,
                 icon_size=34,
                 tooltip="Perfil",
-                on_click=proximamente("Perfil"),
+                on_click=ir_a_perfil,
             ),
         ],
         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -194,39 +201,91 @@ def index_view(page: ft.Page):
         height=64,
     )
 
+    # ---------- Panel principal ----------
+    panel_principal = ft.Column(
+        controls=[
+            ft.Column(
+                controls=[
+                    encabezado,
+                    saludo,
+                    btn_overview,
+                    ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
+                    resumen,
+                    ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
+                    alerta_stock,
+                    ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
+                    ft.Row(
+                        controls=[tarjeta_inventario, tarjeta_maps],
+                        spacing=14,
+                        vertical_alignment=ft.CrossAxisAlignment.START,
+                    ),
+                    ft.TextButton(
+                        content=ft.Text("Cerrar sesión", size=12, color=ft.Colors.GREY_500),
+                        on_click=mostrar_confirmar_logout,
+                    ),
+                ],
+                spacing=12,
+                scroll=ft.ScrollMode.AUTO,
+                expand=True,
+            ),
+            barra_inferior,
+        ],
+        spacing=0,
+        expand=True,
+    )
+
+    # ---------- Panel de confirmación ----------
+    panel_confirmar_logout = ft.Column(
+        visible=False,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        controls=[
+            ft.Divider(height=80, color=ft.Colors.TRANSPARENT),
+            ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Icon(ft.Icons.LOGOUT, color=ft.Colors.ORANGE_800, size=50),
+                        ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+                        ft.Text("¿Deseas cerrar sesión?",
+                                size=18, weight=ft.FontWeight.BOLD,
+                                color=ft.Colors.WHITE, text_align=ft.TextAlign.CENTER),
+                        ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
+                        ft.Text("Tendrás que volver a iniciar sesión\npara acceder a tu cuenta.",
+                                size=12, color=ft.Colors.GREY_400, text_align=ft.TextAlign.CENTER),
+                        ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
+                        ft.Button(
+                            content=ft.Text("Sí, cerrar sesión", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                            bgcolor=ft.Colors.ORANGE_800,
+                            width=230,
+                            height=46,
+                            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=25)),
+                            on_click=confirmar_logout,
+                        ),
+                        ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
+                        ft.Button(
+                            content=ft.Text("No, cancelar", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                            bgcolor=ft.Colors.GREY_700,
+                            width=230,
+                            height=46,
+                            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=25)),
+                            on_click=cancelar_logout,
+                        ),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    spacing=0,
+                ),
+                bgcolor=ft.Colors.BLACK,
+                border_radius=14,
+                padding=30,
+            ),
+        ],
+    )
+
     # ---------- Tarjeta Celular ----------
     tarjeta_movil = ft.Container(
         content=ft.Column(
             controls=[
-                ft.Column(
-                    controls=[
-                        encabezado,
-                        saludo,
-                        btn_overview,
-                        ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
-                        resumen,
-                        ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
-                        alerta_stock,
-                        ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
-                        ft.Row(
-                            controls=[tarjeta_inventario, tarjeta_maps],
-                            spacing=14,
-                            vertical_alignment=ft.CrossAxisAlignment.START,
-                        ),
-                                                ft.TextButton(
-                            content=ft.Text("Cerrar sesión", size=12, color=ft.Colors.GREY_500),
-                            on_click=cerrar_sesion,
-                        ),
-                        ft.TextButton(
-                            content=ft.Text("Eliminar cuenta", size=12, color=ft.Colors.RED_400),
-                            on_click=ir_a_eliminar_cuenta,
-                        ),
-                    ],
-                    spacing=12,
-                    scroll=ft.ScrollMode.AUTO,
-                    expand=True,
-                ),
-                barra_inferior,
+                panel_principal,
+                panel_confirmar_logout,
             ],
             spacing=0,
         ),

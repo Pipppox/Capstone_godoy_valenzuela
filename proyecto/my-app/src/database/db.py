@@ -77,6 +77,17 @@ def init_db():
                 FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE CASCADE
             )
         """)
+                
+        
+        try:
+            conn.execute("ALTER TABLE usuarios ADD COLUMN foto_perfil TEXT")
+        except Exception:
+            pass  # la columna ya existe
+
+        try:
+            conn.execute("ALTER TABLE usuarios ADD COLUMN nombre_empresa TEXT DEFAULT ''")
+        except Exception:
+            pass
         filas = conn.execute("SELECT id, email, telefono FROM usuarios").fetchall()
         print(f"[DB] Archivo: {DB_PATH}")
         print(f"[DB] Usuarios registrados: {[dict(f) for f in filas]}")
