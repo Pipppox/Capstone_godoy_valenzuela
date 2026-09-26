@@ -39,13 +39,14 @@ def _validar_registro(nombre, apellido, email, telefono, password) -> str | None
     return None
 
 
-def registrar_usuario(nombre, apellido, email, telefono, password) -> None:
+def registrar_usuario(nombre, apellido, email, telefono, password, nombre_empresa="") -> None:
     """Registra al usuario. Lanza ValueError con un mensaje para mostrar en pantalla."""
     nombre = (nombre or "").strip()
     apellido = (apellido or "").strip()
     email = normalizar_email(email)
     telefono = normalizar_telefono(telefono)
     password = password or ""
+    nombre_empresa = (nombre_empresa or "").strip()
 
     error = _validar_registro(nombre, apellido, email, telefono, password)
     if error:
@@ -61,9 +62,9 @@ def registrar_usuario(nombre, apellido, email, telefono, password) -> None:
             raise ValueError("Ese teléfono ya está registrado.")
 
         conn.execute(
-            """INSERT INTO usuarios (nombre, apellido, email, telefono, password_hash, salt)
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            (nombre, apellido, email, telefono, password_hash, salt.hex()),
+            """INSERT INTO usuarios (nombre, apellido, email, telefono, password_hash, salt, nombre_empresa)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (nombre, apellido, email, telefono, password_hash, salt.hex(), nombre_empresa),
         )
         print(f"[REGISTRO] Guardado: {email} / {telefono}")
 
@@ -149,3 +150,55 @@ def eliminar_cuenta(email: str, password: str) -> None:
         conn.execute("DELETE FROM ventas WHERE usuario_id = ?", (fila["id"],))
         conn.execute("DELETE FROM productos WHERE usuario_id = ?", (fila["id"],))
         conn.execute("DELETE FROM usuarios WHERE id = ?", (fila["id"],))        
+
+def actualizar_foto(usuario_id: int, ruta_foto: str) -> None:
+    with conexion() as conn:
+        conn.execute(
+            "UPDATE usuarios SET foto_perfil = ? WHERE id = ?",
+            (ruta_foto, usuario_id),
+        )
+
+def actualizar_datos(usuario_id: int, nombre: str, apellido: str, email: str, telefono: str,  nombre_empresa: str = "") -> dict:
+    """Actualiza los datos del usuario. Devuelve el usuario actualizado."""
+    nombre = (nombre or "").strip()
+    apellido = (apellido or "").strip()
+    email = normalizar_email(email)
+    telefono = normalizar_telefono(telefono)
+    nombre_empresa = (nombre_empresa or "").strip()
+
+    if not all([nombre, apellido, email, telefono]):
+        raise ValueError("Completa todos los campos.")
+
+    if not EMAIL_RE.match(email):
+        raise ValueError("El correo no es válido.")
+
+    if len(telefono) != 9:
+        raise ValueError("El teléfono debe tener 9 dígitos.")
+
+    with conexion() as conn:
+        duplicado_email = conn.execute(
+            "SELECT 1 FROM usuarios WHERE email = ? AND id != ?",
+            (email, usuario_id),
+        ).fetchone()
+        if duplicado_email:
+            raise ValueError("Ese correo ya está en uso por otra cuenta.")
+
+        duplicado_tel = conn.execute(
+            "SELECT 1 FROM usuarios WHERE telefono = ? AND id != ?",
+            (telefono, usuario_id),
+        ).fetchone()
+        if duplicado_tel:
+            raise ValueError("Ese teléfono ya está en uso por otra cuenta.")
+
+        conn.execute(
+            """UPDATE usuarios SET nombre = ?, apellido = ?, email = ?, telefono = ?, nombre_empresa = ?
+               WHERE id = ?""",
+            (nombre, apellido, email, telefono, nombre_empresa, usuario_id),
+        )
+
+        fila = conn.execute("SELECT * FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
+
+    usuario = dict(fila)
+    usuario.pop("password_hash")
+    usuario.pop("salt")
+    return usuario

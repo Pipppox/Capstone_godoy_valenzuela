@@ -19,6 +19,9 @@ def inventario_view(page: ft.Page):
             print(f"[AVISO] {nombre_vista}: próximamente")
         return _handler
 
+    async def ir_a_perfil(e):
+        await page.push_route("/perfil_usuario")
+
     # ---------- Datos ----------
     lista = productos.listar()
     maximo = productos.maximo_stock(lista)
@@ -65,7 +68,7 @@ def inventario_view(page: ft.Page):
                 icon_color=ft.Colors.GREY_500,
                 icon_size=30,
                 tooltip="Perfil",
-                on_click=proximamente("Perfil"),
+                on_click=ir_a_perfil,
             ),
         ],
         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,

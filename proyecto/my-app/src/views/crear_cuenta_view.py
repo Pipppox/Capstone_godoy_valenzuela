@@ -37,6 +37,13 @@ def crear_cuenta_view(page: ft.Page):
         color=ft.Colors.WHITE,
         keyboard_type=ft.KeyboardType.PHONE,
     )
+    txt_empresa = ft.TextField(
+        label="Nombre del emprendimiento",
+        border_color=ft.Colors.GREY_700,
+        color=ft.Colors.WHITE,
+        capitalization=ft.TextCapitalization.WORDS,
+    )
+
     txt_password = ft.TextField(
         label="Contraseña",
         password=True,
@@ -56,6 +63,7 @@ def crear_cuenta_view(page: ft.Page):
                 txt_email.value,
                 txt_telefono.value,
                 txt_password.value,
+                txt_empresa.value,
             )
         except ValueError as err:
             mensaje.value = str(err)
@@ -97,6 +105,7 @@ def crear_cuenta_view(page: ft.Page):
                 txt_apellido,
                 txt_email,
                 txt_telefono,
+                txt_empresa,
                 txt_password,
                 mensaje,
                 btn_registrar,
