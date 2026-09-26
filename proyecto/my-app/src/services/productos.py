@@ -82,3 +82,57 @@ def crear(codigo, nombre, categoria, precio, stock) -> None:
                VALUES (?, ?, ?, ?, ?, ?)""",
             (uid, codigo, nombre, categoria, precio, stock),
         )
+
+def eliminar(producto_id: int) -> None:
+    uid = _usuario_id()
+    if uid is None:
+        raise ValueError("Debes iniciar sesión.")
+
+    with conexion() as conn:
+        producto = conn.execute(
+            "SELECT id FROM productos WHERE id = ? AND usuario_id = ?",
+            (producto_id, uid),
+        ).fetchone()
+        if producto is None:
+            raise ValueError("El producto no existe.")
+
+        conn.execute("DELETE FROM ventas WHERE producto_id = ?", (producto_id,))
+        conn.execute("DELETE FROM productos WHERE id = ?", (producto_id,))
+
+
+def actualizar(producto_id: int, codigo: str, nombre: str, categoria: str, precio, stock) -> None:
+    uid = _usuario_id()
+    if uid is None:
+        raise ValueError("Debes iniciar sesión.")
+
+    codigo = (codigo or "").strip().upper()
+    nombre = (nombre or "").strip()
+    categoria = (categoria or "").strip()
+
+    if not all([codigo, nombre, categoria]):
+        raise ValueError("Completa código, nombre y categoría.")
+
+    try:
+        precio = int(str(precio).replace(".", "").replace("$", "").strip())
+        stock = int(str(stock).strip())
+    except ValueError:
+        raise ValueError("Precio y stock deben ser números enteros.")
+
+    if precio <= 0:
+        raise ValueError("El precio debe ser mayor que 0.")
+    if stock < 0:
+        raise ValueError("El stock no puede ser negativo.")
+
+    with conexion() as conn:
+        duplicado = conn.execute(
+            "SELECT 1 FROM productos WHERE usuario_id = ? AND codigo = ? AND id != ?",
+            (uid, codigo, producto_id),
+        ).fetchone()
+        if duplicado:
+            raise ValueError(f"Ya tienes otro producto con el código {codigo}.")
+
+        conn.execute(
+            """UPDATE productos SET codigo = ?, nombre = ?, categoria = ?, precio = ?, stock = ?
+               WHERE id = ? AND usuario_id = ?""",
+            (codigo, nombre, categoria, precio, stock, producto_id, uid),
+        )        
