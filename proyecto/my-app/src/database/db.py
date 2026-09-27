@@ -88,6 +88,10 @@ def init_db():
             conn.execute("ALTER TABLE usuarios ADD COLUMN nombre_empresa TEXT DEFAULT ''")
         except Exception:
             pass
+        try:
+            conn.execute("ALTER TABLE usuarios ADD COLUMN notificaciones INTEGER DEFAULT 0")
+        except Exception:
+            pass
         filas = conn.execute("SELECT id, email, telefono FROM usuarios").fetchall()
         print(f"[DB] Archivo: {DB_PATH}")
         print(f"[DB] Usuarios registrados: {[dict(f) for f in filas]}")

@@ -1,6 +1,6 @@
 import flet as ft
 
-from services import productos, ventas
+from services import productos, ventas, sesion
 
 
 def vender_view(page: ft.Page):
@@ -39,6 +39,14 @@ def vender_view(page: ft.Page):
 
     mensaje = ft.Text("", size=13, color=ft.Colors.RED_400, text_align=ft.TextAlign.CENTER)
 
+
+    alerta_stock = ft.Container(
+        visible=False,
+        bgcolor=ft.Colors.BLACK,
+        border_radius=12,
+        padding=ft.Padding.symmetric(horizontal=14, vertical=10),
+    )
+
     async def vender(e):
         mensaje.color = ft.Colors.RED_400
         try:
@@ -71,6 +79,54 @@ def vender_view(page: ft.Page):
         txt_cantidad.value = "1"
         page.update()
 
+                # Popup de stock bajo si notificaciones están activas
+        if resumen["stock_nuevo"] <= productos.STOCK_MINIMO:
+            notif_activas = bool((sesion.usuario() or {}).get("notificaciones", 0))
+            if notif_activas:
+                panel_popup.content = ft.Container(
+                    content=ft.Column(
+                        controls=[
+                            ft.Icon(ft.Icons.WARNING_AMBER_ROUNDED, color=ft.Colors.AMBER_600, size=50),
+                            ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+                            ft.Text("¡Stock bajo!", size=20, weight=ft.FontWeight.BOLD,
+                                    color=ft.Colors.AMBER_600, text_align=ft.TextAlign.CENTER),
+                            ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
+                            ft.Text(
+                                f'"{resumen["nombre"]}" tiene solo {resumen["stock_nuevo"]} unidades.',
+                                size=13, color=ft.Colors.WHITE, text_align=ft.TextAlign.CENTER,
+                            ),
+                            ft.Text("Considera reabastecer este producto.",
+                                    size=11, color=ft.Colors.GREY_400, text_align=ft.TextAlign.CENTER),
+                            ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
+                            ft.Button(
+                                content=ft.Text("Entendido", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                                bgcolor=ft.Colors.ORANGE_800,
+                                width=180,
+                                height=42,
+                                style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=25)),
+                                on_click=cerrar_popup,
+                            ),
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=0,
+                    ),
+                    bgcolor=ft.Colors.BLACK,
+                    border_radius=14,
+                    padding=30,
+                    border=ft.Border.all(2, ft.Colors.AMBER_600),
+                )
+                panel_formulario.visible = False
+                panel_popup.visible = True
+                page.update()
+
+    panel_popup = ft.Container(visible=False)
+
+    def cerrar_popup(e):
+        panel_popup.visible = False
+        panel_formulario.visible = True
+        page.update()
+
+    
     txt_cantidad.on_submit = vender
 
     encabezado = ft.Row(
@@ -132,18 +188,28 @@ def vender_view(page: ft.Page):
         disabled=not lista,
     )
 
+    panel_formulario = ft.Column(
+        controls=[
+            encabezado,
+            ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
+            formulario,
+            mensaje,
+            alerta_stock,
+            btn_vender,
+        ],
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        spacing=14,
+        scroll=ft.ScrollMode.AUTO,
+    )
+
     tarjeta_movil = ft.Container(
         content=ft.Column(
             controls=[
-                encabezado,
-                ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
-                formulario,
-                mensaje,
-                btn_vender,
+                panel_formulario,
+                panel_popup,
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=14,
-            scroll=ft.ScrollMode.AUTO,
+            spacing=0,
         ),
         width=360,
         height=680,

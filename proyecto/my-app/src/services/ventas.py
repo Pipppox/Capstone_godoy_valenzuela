@@ -45,7 +45,7 @@ def registrar(producto_id, cantidad, lugar="") -> dict:
                (usuario_id, producto_id, cantidad, precio_unitario, total, lugar)
                VALUES (?, ?, ?, ?, ?, ?)""",
             (uid, producto_id, cantidad, producto["precio"], total,
-             (lugar or "").strip() or None),
+            (lugar or "").strip().title() or None),
         )
 
         conn.execute(

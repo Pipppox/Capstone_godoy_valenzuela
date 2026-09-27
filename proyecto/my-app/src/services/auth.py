@@ -202,3 +202,10 @@ def actualizar_datos(usuario_id: int, nombre: str, apellido: str, email: str, te
     usuario.pop("password_hash")
     usuario.pop("salt")
     return usuario
+
+def actualizar_notificaciones(usuario_id: int, activadas: bool) -> None:
+    with conexion() as conn:
+        conn.execute(
+            "UPDATE usuarios SET notificaciones = ? WHERE id = ?",
+            (1 if activadas else 0, usuario_id),
+        )
