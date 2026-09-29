@@ -1,6 +1,7 @@
 import flet as ft
 
 from services import sesion
+from services import productos
 
 
 def index_view(page: ft.Page):
@@ -33,6 +34,9 @@ def index_view(page: ft.Page):
     async def ir_a_perfil(e):
         await page.push_route("/perfil_usuario")
 
+    async def ir_a_dashboard(e):
+        await page.push_route("/dashboard")
+
     # ---------- Encabezado ----------
     encabezado = ft.Row(
         controls=[
@@ -63,7 +67,7 @@ def index_view(page: ft.Page):
         width=110,
         height=34,
         style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=20)),
-        on_click=proximamente("Overview"),
+        on_click=ir_a_dashboard,
     )
 
     # ---------- Tarjeta grande (resumen) ----------
@@ -95,19 +99,43 @@ def index_view(page: ft.Page):
         height=135,
         bgcolor=ft.Colors.BLACK,
         border_radius=18,
-        on_click=proximamente("Dashboard"),
+        on_click=ir_a_dashboard,
         ink=True,
     )
 
-    # ---------- Alerta de stock bajo ----------
+        # ---------- Alerta de stock bajo ----------
+    bajos = productos.con_stock_bajo()
+    notif_activas = bool(usuario.get("notificaciones", 0))
+
+    if bajos:
+        nombres_bajos = ", ".join(p["nombre"] for p in bajos[:3])
+        mas = f" (+{len(bajos) - 3} más)" if len(bajos) > 3 else ""
+        texto_alerta = f"Stock BAJO en {nombres_bajos}{mas}"
+        color_alerta = ft.Colors.AMBER_600
+    else:
+        texto_alerta = "Stock en orden"
+        color_alerta = ft.Colors.GREEN_400
+
     alerta_stock = ft.Container(
         content=ft.Row(
             controls=[
                 ft.Row(
                     controls=[
-                        ft.Icon(ft.Icons.WARNING_AMBER_ROUNDED, color=ft.Colors.AMBER_600, size=24),
-                        ft.Text("Stock BAJO en Lapices", size=14,
-                                weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                        ft.Icon(
+                            ft.Icons.WARNING_AMBER_ROUNDED if bajos else ft.Icons.CHECK_CIRCLE,
+                            color=color_alerta, size=24,
+                        ),
+                        ft.Column(
+                            controls=[
+                                ft.Text(texto_alerta, size=13,
+                                        weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                                ft.Text(
+                                    "Notificaciones activadas" if notif_activas else "Notificaciones desactivadas",
+                                    size=9, color=ft.Colors.GREY_500,
+                                ),
+                            ],
+                            spacing=2,
+                        ),
                     ],
                     spacing=12,
                 ),
@@ -121,7 +149,6 @@ def index_view(page: ft.Page):
         on_click=ir_a_inventario,
         ink=True,
     )
-
     # ---------- Inventario ----------
     def linea_producto(nombre_producto: str, proporcion: float, color: str):
         return ft.Column(
