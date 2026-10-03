@@ -15,6 +15,7 @@ from views.eliminar_cta_view import eliminar_cuenta_view
 from views.perfil_usuario_view import perfil_usuario_view
 from views.configuracion import configuracion_view
 from views.dashboard_view import dashboard_view
+from views.maps_view import maps_view
 
 def main(page: ft.Page):
     init_db()
@@ -30,6 +31,7 @@ def main(page: ft.Page):
         "/iniciar_sesion_email": iniciar_sesion_email_view,
         "/iniciar_sesion_celu": iniciar_sesion_celu_view,
         "/restablecer_contra": restablecer_contra_view,
+        "/maps": maps_view,
     }
 
     # Rutas que requieren sesión (se apilan sobre el index)

@@ -1,6 +1,7 @@
 import flet as ft
 
 from services import productos, ventas, sesion
+from services.geocoding import autocompletar, guardar_lugar_desde_place
 
 
 def vender_view(page: ft.Page):
@@ -30,15 +31,74 @@ def vender_view(page: ft.Page):
         color=ft.Colors.WHITE,
     )
 
+    # ---------- Autocompletado de lugar ----------
+    lugar_seleccionado = {"place_id": None, "descripcion": ""}
+
     txt_lugar = ft.TextField(
-        label="Lugar de venta (opcional)",
-        hint_text="Feria Recoleta, Metro Baquedano...",
+        label="Lugar de venta",
+        hint_text="Buscar lugar...",
         border_color=ft.Colors.GREY_700,
         color=ft.Colors.WHITE,
     )
 
-    mensaje = ft.Text("", size=13, color=ft.Colors.RED_400, text_align=ft.TextAlign.CENTER)
+    lista_sugerencias = ft.Column(visible=False, spacing=2)
 
+    def on_lugar_change(e):
+        texto = txt_lugar.value or ""
+        lugar_seleccionado["place_id"] = None
+        lugar_seleccionado["descripcion"] = ""
+
+        if len(texto) < 3:
+            lista_sugerencias.visible = False
+            page.update()
+            return
+
+        sugerencias = autocompletar(texto)
+
+        if not sugerencias:
+            lista_sugerencias.visible = False
+            page.update()
+            return
+
+        lista_sugerencias.controls.clear()
+        for s in sugerencias:
+            lista_sugerencias.controls.append(
+                ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            ft.Icon(ft.Icons.LOCATION_ON, color=ft.Colors.RED_400, size=16),
+                            ft.Text(s["descripcion"], size=12, color=ft.Colors.WHITE,
+                                    expand=True, max_lines=2),
+                        ],
+                        spacing=8,
+                    ),
+                    padding=ft.Padding.symmetric(horizontal=10, vertical=8),
+                    border_radius=8,
+                    ink=True,
+                    on_click=lambda e, sug=s: seleccionar_lugar(sug),
+                )
+            )
+
+        lista_sugerencias.visible = True
+        page.update()
+
+    def seleccionar_lugar(sugerencia: dict):
+        lugar_seleccionado["place_id"] = sugerencia["place_id"]
+        lugar_seleccionado["descripcion"] = sugerencia["descripcion"]
+        txt_lugar.value = sugerencia["descripcion"]
+        lista_sugerencias.visible = False
+        page.update()
+
+    txt_lugar.on_change = on_lugar_change
+
+    contenedor_sugerencias = ft.Container(
+        content=lista_sugerencias,
+        bgcolor=ft.Colors.GREY_800,
+        border_radius=10,
+        padding=4,
+    )
+
+    mensaje = ft.Text("", size=13, color=ft.Colors.RED_400, text_align=ft.TextAlign.CENTER)
 
     alerta_stock = ft.Container(
         visible=False,
@@ -47,7 +107,14 @@ def vender_view(page: ft.Page):
         padding=ft.Padding.symmetric(horizontal=14, vertical=10),
     )
 
-    async def vender(e):
+    panel_popup = ft.Container(visible=False)
+
+    def cerrar_popup(e):
+        panel_popup.visible = False
+        panel_formulario.visible = True
+        page.update()
+
+    async def vender_producto(e):
         mensaje.color = ft.Colors.RED_400
         try:
             resumen = ventas.registrar(
@@ -67,7 +134,26 @@ def vender_view(page: ft.Page):
             + f' — quedan {resumen["stock_nuevo"]} unidades.'
         )
 
-        # Refrescar el desplegable con el stock actualizado
+                # Geocodificar el lugar de venta
+        lugar_vendido = (txt_lugar.value or "").strip().title()
+        if lugar_seleccionado["place_id"]:
+            from services.geocoding import obtener_coordenadas_place
+            from database.db import conexion as get_conn
+            coords = obtener_coordenadas_place(lugar_seleccionado["place_id"])
+            if coords:
+                with get_conn() as conn:
+                    conn.execute(
+                        "INSERT OR REPLACE INTO lugares_cache (lugar, lat, lng) VALUES (?, ?, ?)",
+                        (lugar_vendido, coords["lat"], coords["lng"]),
+                    )
+                mensaje.value += f'\n📍 {coords.get("direccion_formateada", lugar_vendido)}'
+        elif lugar_vendido:
+            from services.geocoding import geocodificar_y_guardar
+            geo = geocodificar_y_guardar(lugar_vendido)
+            if geo:
+                mensaje.value += f'\n📍 {geo.get("lugar", lugar_vendido)}'
+                
+        # Refrescar el desplegable
         dd_producto.options = [
             ft.dropdown.Option(
                 key=str(p["id"]),
@@ -77,9 +163,13 @@ def vender_view(page: ft.Page):
         ]
         dd_producto.value = None
         txt_cantidad.value = "1"
+        txt_lugar.value = ""
+        lugar_seleccionado["place_id"] = None
+        lugar_seleccionado["descripcion"] = ""
+        lista_sugerencias.visible = False
         page.update()
 
-                # Popup de stock bajo si notificaciones están activas
+        # Popup de stock bajo
         if resumen["stock_nuevo"] <= productos.STOCK_MINIMO:
             notif_activas = bool((sesion.usuario() or {}).get("notificaciones", 0))
             if notif_activas:
@@ -95,8 +185,6 @@ def vender_view(page: ft.Page):
                                 f'"{resumen["nombre"]}" tiene solo {resumen["stock_nuevo"]} unidades.',
                                 size=13, color=ft.Colors.WHITE, text_align=ft.TextAlign.CENTER,
                             ),
-                            ft.Text("Considera reabastecer este producto.",
-                                    size=11, color=ft.Colors.GREY_400, text_align=ft.TextAlign.CENTER),
                             ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
                             ft.Button(
                                 content=ft.Text("Entendido", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
@@ -119,15 +207,7 @@ def vender_view(page: ft.Page):
                 panel_popup.visible = True
                 page.update()
 
-    panel_popup = ft.Container(visible=False)
-
-    def cerrar_popup(e):
-        panel_popup.visible = False
-        panel_formulario.visible = True
-        page.update()
-
-    
-    txt_cantidad.on_submit = vender
+    txt_cantidad.on_submit = vender_producto
 
     encabezado = ft.Row(
         controls=[
@@ -152,6 +232,7 @@ def vender_view(page: ft.Page):
                 dd_producto,
                 txt_cantidad,
                 txt_lugar,
+                contenedor_sugerencias,
             ],
             spacing=12,
         )
@@ -159,7 +240,6 @@ def vender_view(page: ft.Page):
         cuerpo = ft.Column(
             controls=[
                 ft.Text("No tienes productos para vender.", size=13, color=ft.Colors.GREY_400),
-                ft.Text("Agrega uno primero desde Inventario.", size=12, color=ft.Colors.GREY_500),
             ],
             spacing=6,
         )
@@ -184,7 +264,7 @@ def vender_view(page: ft.Page):
         width=230,
         height=46,
         style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=25)),
-        on_click=vender,
+        on_click=vender_producto,
         disabled=not lista,
     )
 

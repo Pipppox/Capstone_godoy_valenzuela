@@ -1,6 +1,6 @@
 from database.db import conexion
 from services import sesion
-
+from services.geocoding import geocodificar_y_guardar
 
 def _usuario_id() -> int | None:
     return (sesion.usuario() or {}).get("id")
@@ -54,7 +54,8 @@ def registrar(producto_id, cantidad, lugar="") -> dict:
         )
 
         stock_nuevo = producto["stock"] - cantidad
-
+    if lugar:
+            geocodificar_y_guardar(lugar)
     return {
         "nombre": producto["nombre"],
         "cantidad": cantidad,
