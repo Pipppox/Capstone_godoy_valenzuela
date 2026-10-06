@@ -77,6 +77,14 @@ def init_db():
                 FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE CASCADE
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS lugares_cache (
+                id    INTEGER PRIMARY KEY AUTOINCREMENT,
+                lugar TEXT NOT NULL UNIQUE,
+                lat   REAL NOT NULL,
+                lng   REAL NOT NULL
+            )
+        """)
                 
         
         try:

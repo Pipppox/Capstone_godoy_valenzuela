@@ -37,6 +37,8 @@ def index_view(page: ft.Page):
     async def ir_a_dashboard(e):
         await page.push_route("/dashboard")
 
+    async def ir_a_maps(e):
+            await page.push_route("/maps")
     # ---------- Encabezado ----------
     encabezado = ft.Row(
         controls=[
@@ -184,17 +186,32 @@ def index_view(page: ft.Page):
         expand=True,
     )
 
-    # ---------- Maps ----------
+        # ---------- Maps ----------
+    from services.geocoding import generar_url_mapa, obtener_marcadores
+
+    uid = usuario.get("id")
+    marcadores_mapa = obtener_marcadores(usuario_id=uid)
+    url_mini_mapa = generar_url_mapa(ancho=300, alto=200, marcadores=marcadores_mapa)
+
+    if url_mini_mapa:
+        contenido_mapa = ft.Image(
+            src=url_mini_mapa,
+            fit=ft.BoxFit.COVER,
+            border_radius=14,
+        )
+    else:
+        contenido_mapa = ft.Icon(ft.Icons.MAP, color=ft.Colors.BLUE_300, size=40)
+
     tarjeta_maps = ft.Column(
         controls=[
             ft.Text("Maps", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
             ft.Container(
-                content=ft.Icon(ft.Icons.MAP, color=ft.Colors.BLUE_300, size=40),
-                alignment=ft.Alignment.CENTER,
+                content=contenido_mapa,
                 bgcolor=ft.Colors.BLUE_GREY_900,
                 border_radius=14,
                 height=110,
-                on_click=proximamente("Maps"),
+                clip_behavior=ft.ClipBehavior.HARD_EDGE,
+                on_click=ir_a_maps,
                 ink=True,
             ),
         ],
