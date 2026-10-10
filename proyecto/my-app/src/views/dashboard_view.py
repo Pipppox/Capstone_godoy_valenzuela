@@ -1,8 +1,12 @@
+from pathlib import Path
+
 import flet as ft
 
 from database.db import conexion
 from services import estadisticas
 from services import productos as srv_productos
+from services import inventario_io
+from views.inventario_view import _obtener_picker
 
 
 def dashboard_view(page: ft.Page):
@@ -13,6 +17,15 @@ def dashboard_view(page: ft.Page):
         def handler(e):
             print(f"[AVISO] {nombre}: próximamente")
         return handler
+
+    picker = _obtener_picker(page)
+
+    def carpeta_descargas() -> str | None:
+        """Carpeta inicial del diálogo: Descargas (fuera del proyecto)."""
+        if page.web:
+            return None
+        descargas = Path.home() / "Downloads"
+        return str(descargas if descargas.exists() else Path.home())
 
     data = estadisticas.resumen()
     lista_productos = srv_productos.listar()
@@ -382,36 +395,114 @@ def dashboard_view(page: ft.Page):
     else:
         seccion_historial = ft.Container(visible=False)
 
-    # ---------- Exportar / Importar ----------
-    def boton_archivo(texto: str, icono: str, color: str, handler):
-        return ft.Container(
+    # ---------- Exportar ventas (solo exportar) ----------
+    mensaje_exportar = ft.Text("", size=12, text_align=ft.TextAlign.CENTER)
+    panel_exportar = ft.Container(visible=False)
+
+    def mostrar_resultado(texto: str, ok: bool = True):
+        mensaje_exportar.value = texto
+        mensaje_exportar.color = ft.Colors.GREEN_400 if ok else ft.Colors.RED_400
+
+    def mostrar_exportar(e):
+        panel_exportar.visible = not panel_exportar.visible
+        mensaje_exportar.value = ""
+        page.update()
+
+    def exportar_ventas(formato: str):
+        async def handler(e):
+            panel_exportar.visible = False
+            try:
+                if formato == "xlsx":
+                    datos = inventario_io.exportar_ventas_excel()
+                else:
+                    datos = inventario_io.exportar_ventas_csv()
+            except ValueError as err:
+                mostrar_resultado(str(err), ok=False)
+                page.update()
+                return
+            except Exception as err:
+                print(f"[EXPORTAR VENTAS] Error: {err!r}")
+                mostrar_resultado(f"No se pudo generar el archivo: {err}", ok=False)
+                page.update()
+                return
+
+            nombre = inventario_io.nombre_archivo_ventas(formato)
+            ruta = await picker.save_file(
+                dialog_title="Guardar ventas",
+                file_name=nombre,
+                initial_directory=carpeta_descargas(),
+                file_type=ft.FilePickerFileType.CUSTOM,
+                allowed_extensions=[formato],
+                src_bytes=datos,
+            )
+
+            if page.web:
+                mostrar_resultado(f"Descargado como {nombre}")
+            elif ruta:
+                mostrar_resultado("Ventas exportadas correctamente.")
+            else:
+                mostrar_resultado("Exportación cancelada.", ok=False)
+            page.update()
+        return handler
+
+    def boton_formato(texto, icono, color, handler):
+        return ft.Button(
             content=ft.Row(
                 controls=[
-                    ft.Row(
-                        controls=[
-                            ft.Icon(icono, color=color, size=20),
-                            ft.Text(texto, size=13, weight=ft.FontWeight.BOLD, color=color),
-                        ],
-                        spacing=12,
-                    ),
-                    ft.Icon(ft.Icons.CHEVRON_RIGHT, color=ft.Colors.GREY_500, size=20),
+                    ft.Icon(icono, color=ft.Colors.WHITE, size=16),
+                    ft.Text(texto, size=12, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
                 ],
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                spacing=6,
+                tight=True,
             ),
-            bgcolor=ft.Colors.BLACK,
-            border_radius=14,
-            padding=ft.Padding.symmetric(horizontal=16, vertical=14),
+            bgcolor=color,
+            height=36,
+            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=20)),
             on_click=handler,
-            ink=True,
         )
 
-    btn_exportar = boton_archivo(
-        "Exportar Ventas xlsx", ft.Icons.FILE_DOWNLOAD, ft.Colors.RED_400,
-        proximamente("Exportar"),
+    panel_exportar.content = ft.Container(
+        content=ft.Column(
+            controls=[
+                ft.Text("¿En qué formato?", size=13, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                ft.Row(
+                    controls=[
+                        boton_formato("Excel", ft.Icons.TABLE_CHART, ft.Colors.GREEN_700, exportar_ventas("xlsx")),
+                        boton_formato("CSV", ft.Icons.DESCRIPTION, ft.Colors.BLUE_GREY_700, exportar_ventas("csv")),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    spacing=10,
+                ),
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=10,
+        ),
+        bgcolor=ft.Colors.BLACK,
+        border_radius=14,
+        padding=14,
+        border=ft.Border.all(1, ft.Colors.GREY_800),
     )
-    btn_importar = boton_archivo(
-        "Importar xlsx", ft.Icons.FILE_UPLOAD, ft.Colors.RED_400,
-        proximamente("Importar"),
+
+    btn_exportar = ft.Container(
+        content=ft.Row(
+            controls=[
+                ft.Row(
+                    controls=[
+                        ft.Icon(ft.Icons.FILE_DOWNLOAD, color=ft.Colors.GREEN_400, size=20),
+                        ft.Text("Exportar ventas", size=13, weight=ft.FontWeight.BOLD,
+                                color=ft.Colors.WHITE),
+                    ],
+                    spacing=12,
+                ),
+                ft.Icon(ft.Icons.CHEVRON_RIGHT, color=ft.Colors.GREY_500, size=20),
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+        ),
+        bgcolor=ft.Colors.BLACK,
+        border_radius=14,
+        padding=ft.Padding.symmetric(horizontal=16, vertical=14),
+        on_click=mostrar_exportar,
+        ink=True,
     )
 
     # ---------- Barra inferior ----------
@@ -456,7 +547,8 @@ def dashboard_view(page: ft.Page):
                         seccion_historial,
                         ft.Divider(height=8, color=ft.Colors.TRANSPARENT),
                         btn_exportar,
-                        btn_importar,
+                        panel_exportar,
+                        mensaje_exportar,
                     ],
                     spacing=0,
                     scroll=ft.ScrollMode.AUTO,

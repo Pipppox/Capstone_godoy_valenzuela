@@ -1,7 +1,6 @@
 import flet as ft
 
-from services import sesion
-from services.auth import actualizar_datos
+from services import sesion, respaldo
 from services.auth import actualizar_datos, actualizar_notificaciones
 
 
@@ -47,25 +46,154 @@ def configuracion_view(page: ft.Page):
         border_radius=14,
         padding=ft.Padding.symmetric(horizontal=16, vertical=12),
     )
-    fila_notificaciones = ft.Container(
-        content=ft.Row(
+
+    # ---------- Respaldo en la nube ----------
+    def texto_ultimo() -> str:
+        fecha = respaldo.ultimo_respaldo()
+        return f"Último respaldo: {fecha}" if fecha else "Aún no has respaldado tus datos"
+
+    lbl_ultimo = ft.Text(texto_ultimo(), size=11, color=ft.Colors.GREY_500)
+    accion_respaldo = {"tipo": None}  # "respaldar" o "restaurar"
+
+    txt_pass_respaldo = ft.TextField(
+        label="Confirma tu contraseña",
+        password=True,
+        can_reveal_password=True,
+        border_color=ft.Colors.GREY_700,
+        color=ft.Colors.WHITE,
+    )
+    lbl_titulo_respaldo = ft.Text("", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)
+    lbl_aviso_respaldo = ft.Text("", size=11, color=ft.Colors.GREY_400)
+    mensaje_respaldo = ft.Text("", size=12, text_align=ft.TextAlign.CENTER)
+    cargando = ft.ProgressRing(width=18, height=18, stroke_width=2,
+                               color=ft.Colors.ORANGE_800, visible=False)
+    btn_confirmar = ft.Button(
+        content=ft.Text("Confirmar", size=12, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+        bgcolor=ft.Colors.ORANGE_800,
+        height=38,
+        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=20)),
+    )
+    btn_cancelar_respaldo = ft.Button(
+        content=ft.Text("Cancelar", size=12, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+        bgcolor=ft.Colors.GREY_700,
+        height=38,
+        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=20)),
+    )
+
+    panel_respaldo = ft.Container(
+        visible=False,
+        content=ft.Column(
             controls=[
+                lbl_titulo_respaldo,
+                lbl_aviso_respaldo,
+                txt_pass_respaldo,
                 ft.Row(
-                    controls=[
-                        ft.Icon(ft.Icons.NOTIFICATIONS_OUTLINED, color=ft.Colors.WHITE, size=22),
-                        ft.Text("Activar Notificaciones", size=14, color=ft.Colors.WHITE),
-                    ],
-                    spacing=12,
+                    controls=[btn_confirmar, btn_cancelar_respaldo, cargando],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    spacing=10,
                 ),
-                switch_notif,
             ],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=10,
         ),
         bgcolor=ft.Colors.BLACK,
         border_radius=14,
-        padding=ft.Padding.symmetric(horizontal=16, vertical=12),
+        padding=16,
+        border=ft.Border.all(1, ft.Colors.GREY_800),
     )
+
+    def resultado_respaldo(texto: str, ok: bool):
+        mensaje_respaldo.value = texto
+        mensaje_respaldo.color = ft.Colors.GREEN_400 if ok else ft.Colors.RED_400
+
+    def abrir_panel(tipo: str):
+        def handler(e):
+            accion_respaldo["tipo"] = tipo
+            txt_pass_respaldo.value = ""
+            mensaje_respaldo.value = ""
+            if tipo == "respaldar":
+                lbl_titulo_respaldo.value = "Respaldar en la nube"
+                lbl_aviso_respaldo.value = ("Se subirán tus productos, ventas y lugares, "
+                                            "cifrados con tu contraseña.")
+                lbl_aviso_respaldo.color = ft.Colors.GREY_400
+            else:
+                lbl_titulo_respaldo.value = "Restaurar respaldo"
+                lbl_aviso_respaldo.value = ("⚠ Se reemplazarán los productos y ventas de este "
+                                            "dispositivo por los del respaldo.")
+                lbl_aviso_respaldo.color = ft.Colors.AMBER_600
+            panel_respaldo.visible = True
+            page.update()
+        return handler
+
+    def cerrar_panel(e=None):
+        panel_respaldo.visible = False
+        txt_pass_respaldo.value = ""
+        page.update()
+
+    def ejecutar_respaldo(e):
+        password = txt_pass_respaldo.value or ""
+        btn_confirmar.disabled = True
+        cargando.visible = True
+        mensaje_respaldo.value = ""
+        page.update()
+
+        try:
+            if accion_respaldo["tipo"] == "respaldar":
+                r = respaldo.respaldar(password)
+                resultado_respaldo(
+                    f'Respaldo listo: {r["productos"]} productos y {r["ventas"]} ventas.', ok=True)
+                lbl_ultimo.value = texto_ultimo()
+            else:
+                r = respaldo.restaurar(password)
+                resultado_respaldo(
+                    f'Datos restaurados: {r["productos"]} productos y {r["ventas"]} ventas '
+                    f'(respaldo del {r["fecha"]}).', ok=True)
+            panel_respaldo.visible = False
+            txt_pass_respaldo.value = ""
+        except ValueError as err:
+            resultado_respaldo(str(err), ok=False)
+        except Exception as err:
+            print(f"[RESPALDO] Error inesperado: {err!r}")
+            resultado_respaldo(f"Error inesperado: {err}", ok=False)
+        finally:
+            btn_confirmar.disabled = False
+            cargando.visible = False
+            page.update()
+
+    btn_confirmar.on_click = ejecutar_respaldo
+    btn_cancelar_respaldo.on_click = cerrar_panel
+    txt_pass_respaldo.on_submit = ejecutar_respaldo
+
+    def fila_opcion(texto, icono, color, handler, subtitulo=None):
+        textos = [ft.Text(texto, size=14, color=ft.Colors.WHITE)]
+        if subtitulo is not None:
+            textos.append(subtitulo)
+        return ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Icon(icono, color=color, size=22),
+                            ft.Column(controls=textos, spacing=2),
+                        ],
+                        spacing=12,
+                    ),
+                    ft.Icon(ft.Icons.CHEVRON_RIGHT, color=ft.Colors.GREY_500, size=20),
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+            bgcolor=ft.Colors.BLACK,
+            border_radius=14,
+            padding=ft.Padding.symmetric(horizontal=16, vertical=14),
+            on_click=handler,
+            ink=True,
+        )
+
+    fila_respaldar = fila_opcion("Respaldar ahora", ft.Icons.CLOUD_UPLOAD_OUTLINED,
+                                 ft.Colors.GREEN_400, abrir_panel("respaldar"), lbl_ultimo)
+    fila_restaurar = fila_opcion("Restaurar respaldo", ft.Icons.CLOUD_DOWNLOAD_OUTLINED,
+                                 ft.Colors.BLUE_400, abrir_panel("restaurar"))
 
     # ---------- Eliminar cuenta ----------
     fila_eliminar = ft.Container(
@@ -248,6 +376,15 @@ def configuracion_view(page: ft.Page):
         ft.Text("General", size=12, color=ft.Colors.GREY_400),
         ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
         fila_notificaciones,
+        ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
+        ft.Text("Respaldo en la nube", size=12, color=ft.Colors.GREY_400),
+        ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
+        fila_respaldar,
+        ft.Divider(height=8, color=ft.Colors.TRANSPARENT),
+        fila_restaurar,
+        ft.Divider(height=8, color=ft.Colors.TRANSPARENT),
+        panel_respaldo,
+        mensaje_respaldo,
         ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
         ft.Text("Cuenta", size=12, color=ft.Colors.GREY_400),
         ft.Divider(height=6, color=ft.Colors.TRANSPARENT),

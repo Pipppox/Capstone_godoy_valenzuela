@@ -296,40 +296,193 @@ def inventario_view(page: ft.Page):
     )
 
     # ---------- Importar ----------
+    mensaje_importar = ft.Text("", size=12, text_align=ft.TextAlign.CENTER)
+
+    def resultado_importar(texto: str, ok: bool):
+        """Muestra el resultado arriba (mensaje) y junto al botón (mensaje_importar)."""
+        mostrar_mensaje(texto, ok)
+        mensaje_importar.value = texto
+        mensaje_importar.color = ft.Colors.GREEN_400 if ok else ft.Colors.RED_400
+
     async def importar(e):
-        archivos = await picker.pick_files(
-            dialog_title="Selecciona un archivo de inventario",
-            initial_directory=carpeta_descargas(),
-            file_type=ft.FilePickerFileType.CUSTOM,
-            allowed_extensions=["xlsx", "csv"],
-            with_data=True,
-        )
+        mensaje_importar.value = ""
+        try:
+            archivos = await picker.pick_files(
+                dialog_title="Selecciona un archivo de inventario",
+                initial_directory=carpeta_descargas(),
+                file_type=ft.FilePickerFileType.CUSTOM,
+                allowed_extensions=["xlsx", "csv"],
+                with_data=True,
+            )
+        except Exception as err:
+            print(f"[IMPORTAR] Error al abrir el selector: {err!r}")
+            resultado_importar(f"No se pudo abrir el selector de archivos: {err}", ok=False)
+            page.update()
+            return
+
         if not archivos:
+            print("[IMPORTAR] Selección cancelada")
             return
 
         archivo = archivos[0]
-        datos = archivo.bytes
-        if datos is None and archivo.path:
-            datos = Path(archivo.path).read_bytes()
+        print(f"[IMPORTAR] Archivo: {archivo.name} | path={archivo.path} | "
+              f"bytes={'sí' if archivo.bytes else 'no'}")
 
         try:
-            resultado = inventario_io.importar(archivo.name, datos)
-        except ValueError as err:
-            mostrar_mensaje(str(err), ok=False)
+            datos = archivo.bytes
+            if datos is None and archivo.path:
+                datos = Path(archivo.path).read_bytes()
+        except PermissionError:
+            resultado_importar(
+                "No se pudo leer el archivo. ¿Está abierto en Excel? Ciérralo e intenta de nuevo.",
+                ok=False,
+            )
             page.update()
             return
+        except Exception as err:
+            print(f"[IMPORTAR] Error leyendo el archivo: {err!r}")
+            resultado_importar(f"No se pudo leer el archivo: {err}", ok=False)
+            page.update()
+            return
+
+        try:
+            analisis = inventario_io.analizar(archivo.name, datos)
+        except ValueError as err:
+            print(f"[IMPORTAR] {err}")
+            resultado_importar(str(err), ok=False)
+            page.update()
+            return
+        except Exception as err:
+            print(f"[IMPORTAR] Error inesperado: {err!r}")
+            resultado_importar(f"Error al importar: {err}", ok=False)
+            page.update()
+            return
+
+        print(
+            f'[IMPORTAR] Análisis: {len(analisis["nuevos"])} nuevos, '
+            f'{len(analisis["actualizar"])} a actualizar, '
+            f'{len(analisis["conflictos"])} conflictos, {len(analisis["errores"])} errores'
+        )
+        mostrar_resumen_importacion(analisis)
+
+    # ---------- Resumen antes de importar (alerta de conflictos) ----------
+    panel_importar = ft.Container(visible=False)
+    importacion_pendiente: dict = {}
+
+    def _lineas(titulo: str, color, items: list[str], maximo: int = 3):
+        if not items:
+            return []
+        controles = [ft.Text(titulo, size=12, weight=ft.FontWeight.BOLD, color=color)]
+        for item in items[:maximo]:
+            controles.append(ft.Text(f"• {item}", size=11, color=ft.Colors.GREY_300))
+        if len(items) > maximo:
+            controles.append(ft.Text(f"(+{len(items) - maximo} más)", size=11, color=ft.Colors.GREY_500))
+        return controles
+
+    def mostrar_resumen_importacion(analisis: dict):
+        importacion_pendiente.clear()
+        importacion_pendiente.update(analisis)
+
+        n_nuevos = len(analisis["nuevos"])
+        n_actualizar = len(analisis["actualizar"])
+        hay_algo = n_nuevos + n_actualizar > 0
+
+        contenido = [
+            ft.Text("Revisar importación", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+            ft.Text(f"✓ {n_nuevos} productos nuevos", size=12, color=ft.Colors.GREEN_400),
+            ft.Text(f"↻ {n_actualizar} se actualizarán (mismo código y nombre)",
+                    size=12, color=ft.Colors.BLUE_300),
+        ]
+        contenido += _lineas(
+            f'⚠ {len(analisis["conflictos"])} con código ya usado por otro producto (no se importarán):',
+            ft.Colors.AMBER_600, analisis["conflictos"],
+        )
+        contenido += _lineas(
+            f'✕ {len(analisis["errores"])} filas con error (no se importarán):',
+            ft.Colors.RED_400, analisis["errores"],
+        )
+        if not hay_algo:
+            contenido.append(ft.Text("No hay productos válidos para importar.",
+                                     size=12, color=ft.Colors.GREY_400))
+
+        if hay_algo:
+            botones = [
+                ft.Button(
+                    content=ft.Text("Importar", size=12, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                    bgcolor=ft.Colors.BLUE_600,
+                    height=36,
+                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=20)),
+                    on_click=confirmar_importacion,
+                ),
+                ft.Button(
+                    content=ft.Text("Cancelar", size=12, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                    bgcolor=ft.Colors.GREY_700,
+                    height=36,
+                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=20)),
+                    on_click=cancelar_importacion,
+                ),
+            ]
+        else:
+            # Nada que importar: solo se puede cerrar el panel
+            botones = [
+                ft.Button(
+                    content=ft.Text("Cerrar", size=12, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                    bgcolor=ft.Colors.GREY_700,
+                    height=36,
+                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=20)),
+                    on_click=cerrar_resumen,
+                ),
+            ]
+
+        contenido.append(
+            ft.Row(
+                controls=botones,
+                alignment=ft.MainAxisAlignment.CENTER,
+                spacing=10,
+            )
+        )
+
+        hay_problemas = analisis["conflictos"] or analisis["errores"]
+        panel_importar.content = ft.Container(
+            content=ft.Column(controls=contenido, spacing=6),
+            bgcolor=ft.Colors.BLACK,
+            border_radius=14,
+            padding=14,
+            border=ft.Border.all(1, ft.Colors.AMBER_600 if hay_problemas else ft.Colors.GREY_800),
+        )
+        panel_importar.visible = True
+        mensaje_importar.value = ""
+        page.update()
+
+    def confirmar_importacion(e):
+        resultado = inventario_io.aplicar(importacion_pendiente)
+        omitidos = len(importacion_pendiente.get("conflictos", [])) + len(importacion_pendiente.get("errores", []))
+        importacion_pendiente.clear()
+        panel_importar.visible = False
 
         texto = (
             f'Importación lista: {resultado["creados"]} nuevos, '
             f'{resultado["actualizados"]} actualizados.'
         )
-        errores = resultado["errores"]
-        if errores:
-            texto += f"\n{len(errores)} con error:\n" + "\n".join(errores[:3])
-            if len(errores) > 3:
-                texto += f"\n(+{len(errores) - 3} más)"
-        mostrar_mensaje(texto, ok=not errores)
+        if omitidos:
+            texto += f" {omitidos} filas omitidas."
+        if resultado["errores"]:
+            texto += "\n" + "\n".join(resultado["errores"][:3])
+        print(f"[IMPORTAR] {texto}")
+        resultado_importar(texto, ok=not resultado["errores"])
         refrescar()
+
+    def cancelar_importacion(e):
+        importacion_pendiente.clear()
+        panel_importar.visible = False
+        resultado_importar("Importación cancelada.", ok=False)
+        page.update()
+
+    def cerrar_resumen(e):
+        importacion_pendiente.clear()
+        panel_importar.visible = False
+        resultado_importar("No se importó nada: revisa los conflictos del archivo.", ok=False)
+        page.update()
 
     # ---------- Fila de producto ----------
     def fila_producto(producto: dict):
@@ -437,6 +590,8 @@ def inventario_view(page: ft.Page):
             boton_accion("Exportar inventario", ft.Icons.FILE_DOWNLOAD, ft.Colors.GREEN_400, mostrar_exportar),
             panel_exportar,
             boton_accion("Importar inventario", ft.Icons.FILE_UPLOAD, ft.Colors.BLUE_400, importar),
+            panel_importar,
+            mensaje_importar,
         ],
         spacing=12,
         scroll=ft.ScrollMode.AUTO,

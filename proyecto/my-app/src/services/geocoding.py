@@ -2,6 +2,7 @@ import os
 import json
 import time
 import uuid
+import urllib.error
 import urllib.request
 import urllib.parse
 
@@ -260,7 +261,8 @@ def guardar_lugar_desde_place(place_id: str, nombre: str, token: str | None = No
 # ============================================================
 TILES_SESSION_URL = "https://tile.googleapis.com/v1/createSession"
 
-ESTILO_OSCURO_GOOGLE = [
+# Estilo oscuro base (colores)
+_ESTILO_OSCURO_BASE = [
     {"elementType": "geometry", "stylers": [{"color": "#242f3e"}]},
     {"elementType": "labels.text.stroke", "stylers": [{"color": "#242f3e"}]},
     {"elementType": "labels.text.fill", "stylers": [{"color": "#9ca5b3"}]},
@@ -268,17 +270,43 @@ ESTILO_OSCURO_GOOGLE = [
     {"featureType": "road", "elementType": "geometry.stroke", "stylers": [{"color": "#212a37"}]},
     {"featureType": "road.highway", "elementType": "geometry", "stylers": [{"color": "#746855"}]},
     {"featureType": "water", "elementType": "geometry", "stylers": [{"color": "#17263c"}]},
-    # Sin íconos de negocios, paraderos ni estaciones
-    {"featureType": "poi", "stylers": [{"visibility": "off"}]},
-    {"featureType": "transit", "stylers": [{"visibility": "off"}]},
-    {"elementType": "labels.icon", "stylers": [{"visibility": "off"}]},
 ]
+
+# Ocultar íconos de negocios, paraderos y estaciones
+_ESTILO_SIN_ICONOS = [
+    {"featureType": "poi", "elementType": "all", "stylers": [{"visibility": "off"}]},
+    {"featureType": "transit", "elementType": "all", "stylers": [{"visibility": "off"}]},
+    {"featureType": "all", "elementType": "labels.icon", "stylers": [{"visibility": "off"}]},
+]
+
+ESTILO_OSCURO_GOOGLE = _ESTILO_OSCURO_BASE + _ESTILO_SIN_ICONOS
 
 _sesiones_tiles: dict = {}  # cache en memoria: {"oscuro": {...}, "claro": {...}}
 
 
+def _crear_sesion(payload: dict) -> dict | None:
+    """Pide una sesión a Map Tiles API. Devuelve la respuesta o None (y muestra el motivo)."""
+    req = urllib.request.Request(
+        f"{TILES_SESSION_URL}?key={API_KEY}",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            return json.loads(resp.read().decode())
+    except urllib.error.HTTPError as e:
+        detalle = e.read().decode("utf-8", errors="replace")
+        print(f"[GEO] Error sesión de tiles: {e.code} {detalle}")
+    except Exception as e:
+        print(f"[GEO] Error sesión de tiles: {e}")
+    return None
+
+
 def sesion_tiles_google(oscuro: bool = True) -> str | None:
-    """Obtiene (y reutiliza) un token de sesión de Map Tiles API."""
+    """Obtiene (y reutiliza) un token de sesión de Map Tiles API.
+    Si Google rechaza el estilo completo, prueba con uno más simple
+    y, en último caso, sin estilo (mapa claro de Google)."""
     if not API_KEY:
         return None
 
@@ -287,27 +315,23 @@ def sesion_tiles_google(oscuro: bool = True) -> str | None:
     if guardada and guardada["expira"] > time.time() + 3600:
         return guardada["token"]
 
-    payload = {"mapType": "roadmap", "language": "es-CL", "region": "CL"}
+    base = {"mapType": "roadmap", "language": "es-CL", "region": "CL"}
+    intentos = []
     if oscuro:
-        payload["styles"] = ESTILO_OSCURO_GOOGLE
+        intentos.append(("oscuro sin íconos", {**base, "styles": ESTILO_OSCURO_GOOGLE}))
+        intentos.append(("oscuro", {**base, "styles": _ESTILO_OSCURO_BASE}))
+    intentos.append(("normal", base))
 
-    req = urllib.request.Request(
-        f"{TILES_SESSION_URL}?key={API_KEY}",
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
+    data = None
+    for nombre, payload in intentos:
+        data = _crear_sesion(payload)
+        if data and data.get("session"):
+            if nombre != intentos[0][0]:
+                print(f"[GEO] Mapa de Google cargado con estilo '{nombre}'")
+            break
+        data = None
 
-    try:
-        with urllib.request.urlopen(req, timeout=5) as resp:
-            data = json.loads(resp.read().decode())
-    except Exception as e:
-        print(f"[GEO] Error sesión de tiles: {e}")
-        return None
-
-    token = data.get("session")
-    if not token:
-        print(f"[GEO] Respuesta sin sesión de tiles: {data}")
+    if not data:
         return None
 
     try:
@@ -315,5 +339,5 @@ def sesion_tiles_google(oscuro: bool = True) -> str | None:
     except (TypeError, ValueError):
         expira = int(time.time() + 86400)
 
-    _sesiones_tiles[clave] = {"token": token, "expira": expira}
-    return token
+    _sesiones_tiles[clave] = {"token": data["session"], "expira": expira}
+    return data["session"]
