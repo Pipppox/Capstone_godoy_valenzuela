@@ -1,9 +1,31 @@
+from pathlib import Path
+
 import flet as ft
 
-from services import productos
+from services import productos, inventario_io
+
+
+def _obtener_picker(page: ft.Page) -> ft.FilePicker:
+    """En Flet 1.0 FilePicker es un servicio: se registra una sola vez en page.services."""
+    for servicio in page.services:
+        if isinstance(servicio, ft.FilePicker):
+            return servicio
+    picker = ft.FilePicker()
+    page.services.append(picker)
+    return picker
 
 
 def inventario_view(page: ft.Page):
+    picker = _obtener_picker(page)
+
+    def carpeta_descargas() -> str | None:
+        """Carpeta inicial de los diálogos: Descargas (fuera del proyecto).
+        Así el archivo no cae dentro de src/ y 'flet run -r' no reinicia la app."""
+        if page.web:
+            return None
+        descargas = Path.home() / "Downloads"
+        return str(descargas if descargas.exists() else Path.home())
+
     # ---------- Navegación ----------
     async def volver(e):
         await page.push_route("/index")
@@ -15,12 +37,7 @@ def inventario_view(page: ft.Page):
         await page.push_route("/vender")
 
     async def ir_a_perfil(e):
-            await page.push_route("/perfil_usuario")  
-
-    def proximamente(nombre_vista: str):
-        async def _handler(e):
-            print(f"[AVISO] {nombre_vista}: próximamente")
-        return _handler
+        await page.push_route("/perfil_usuario")
 
     # ---------- Estado ----------
     lista = productos.listar()
@@ -28,6 +45,10 @@ def inventario_view(page: ft.Page):
 
     contenedor_productos = ft.Column(spacing=14)
     mensaje = ft.Text("", size=13, color=ft.Colors.GREEN_400, text_align=ft.TextAlign.CENTER)
+
+    def mostrar_mensaje(texto: str, ok: bool = True):
+        mensaje.color = ft.Colors.GREEN_400 if ok else ft.Colors.RED_400
+        mensaje.value = texto
 
     def refrescar():
         nonlocal lista, maximo
@@ -57,7 +78,7 @@ def inventario_view(page: ft.Page):
                     ft.Text(f'¿Eliminar "{producto["nombre"]}"?',
                             size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE,
                             text_align=ft.TextAlign.CENTER),
-                    ft.Text("Se eliminarán también sus ventas registradas.",
+                    ft.Text("Sus ventas se conservan en el historial.",
                             size=11, color=ft.Colors.GREY_400, text_align=ft.TextAlign.CENTER),
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                     ft.Row(
@@ -90,11 +111,9 @@ def inventario_view(page: ft.Page):
     def confirmar_eliminar(e):
         try:
             productos.eliminar(producto_a_eliminar["id"])
-            mensaje.color = ft.Colors.GREEN_400
-            mensaje.value = f'"{producto_a_eliminar["nombre"]}" eliminado.'
+            mostrar_mensaje(f'"{producto_a_eliminar["nombre"]}" eliminado.')
         except ValueError as err:
-            mensaje.color = ft.Colors.RED_400
-            mensaje.value = str(err)
+            mostrar_mensaje(str(err), ok=False)
         panel_confirmar.visible = False
         refrescar()
 
@@ -143,8 +162,7 @@ def inventario_view(page: ft.Page):
             page.update()
             return
 
-        mensaje.color = ft.Colors.GREEN_400
-        mensaje.value = "Producto actualizado."
+        mostrar_mensaje("Producto actualizado.")
         panel_editar.visible = False
         panel_lista.visible = True
         refrescar()
@@ -194,6 +212,124 @@ def inventario_view(page: ft.Page):
         ],
         spacing=10,
     )
+
+    # ---------- Exportar ----------
+    panel_exportar = ft.Container(visible=False)
+
+    def mostrar_exportar(e):
+        panel_exportar.visible = not panel_exportar.visible
+        page.update()
+
+    def exportar(formato: str):
+        async def handler(e):
+            panel_exportar.visible = False
+            if not lista:
+                mostrar_mensaje("No hay productos para exportar.", ok=False)
+                page.update()
+                return
+
+            try:
+                if formato == "xlsx":
+                    datos = inventario_io.exportar_excel()
+                else:
+                    datos = inventario_io.exportar_csv()
+            except Exception as err:
+                mostrar_mensaje(f"No se pudo generar el archivo: {err}", ok=False)
+                page.update()
+                return
+
+            nombre = inventario_io.nombre_archivo(formato)
+            ruta = await picker.save_file(
+                dialog_title="Guardar inventario",
+                file_name=nombre,
+                initial_directory=carpeta_descargas(),
+                file_type=ft.FilePickerFileType.CUSTOM,
+                allowed_extensions=[formato],
+                src_bytes=datos,
+            )
+
+            if page.web:
+                mostrar_mensaje(f"Descargado como {nombre}")
+            elif ruta:
+                mostrar_mensaje(f"Inventario exportado ({len(lista)} productos).")
+            else:
+                mostrar_mensaje("Exportación cancelada.", ok=False)
+            page.update()
+        return handler
+
+    def boton_formato(texto, icono, color, handler):
+        return ft.Button(
+            content=ft.Row(
+                controls=[
+                    ft.Icon(icono, color=ft.Colors.WHITE, size=16),
+                    ft.Text(texto, size=12, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                ],
+                spacing=6,
+                tight=True,
+            ),
+            bgcolor=color,
+            height=36,
+            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=20)),
+            on_click=handler,
+        )
+
+    panel_exportar.content = ft.Container(
+        content=ft.Column(
+            controls=[
+                ft.Text("¿En qué formato?", size=13, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                ft.Row(
+                    controls=[
+                        boton_formato("Excel", ft.Icons.TABLE_CHART, ft.Colors.GREEN_700, exportar("xlsx")),
+                        boton_formato("CSV", ft.Icons.DESCRIPTION, ft.Colors.BLUE_GREY_700, exportar("csv")),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    spacing=10,
+                ),
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=10,
+        ),
+        bgcolor=ft.Colors.BLACK,
+        border_radius=14,
+        padding=14,
+        border=ft.Border.all(1, ft.Colors.GREY_800),
+    )
+
+    # ---------- Importar ----------
+    async def importar(e):
+        archivos = await picker.pick_files(
+            dialog_title="Selecciona un archivo de inventario",
+            initial_directory=carpeta_descargas(),
+            file_type=ft.FilePickerFileType.CUSTOM,
+            allowed_extensions=["xlsx", "csv"],
+            with_data=True,
+        )
+        if not archivos:
+            return
+
+        archivo = archivos[0]
+        datos = archivo.bytes
+        if datos is None and archivo.path:
+            datos = Path(archivo.path).read_bytes()
+
+        try:
+            resultado = inventario_io.importar(archivo.name, datos)
+        except ValueError as err:
+            mostrar_mensaje(str(err), ok=False)
+            page.update()
+            return
+
+        texto = (
+            f'Importación lista: {resultado["creados"]} nuevos, '
+            f'{resultado["actualizados"]} actualizados.'
+        )
+        errores = resultado["errores"]
+        if errores:
+            texto += f"\n{len(errores)} con error:\n" + "\n".join(errores[:3])
+            if len(errores) > 3:
+                texto += f"\n(+{len(errores) - 3} más)"
+        mostrar_mensaje(texto, ok=not errores)
+        refrescar()
 
     # ---------- Fila de producto ----------
     def fila_producto(producto: dict):
@@ -298,6 +434,9 @@ def inventario_view(page: ft.Page):
             ft.Divider(height=8, color=ft.Colors.TRANSPARENT),
             boton_accion("Agregar Producto", ft.Icons.ADD_BOX, ft.Colors.ORANGE_800, ir_a_agregar),
             boton_accion("Vender Producto", ft.Icons.SELL, ft.Colors.RED_400, ir_a_vender),
+            boton_accion("Exportar inventario", ft.Icons.FILE_DOWNLOAD, ft.Colors.GREEN_400, mostrar_exportar),
+            panel_exportar,
+            boton_accion("Importar inventario", ft.Icons.FILE_UPLOAD, ft.Colors.BLUE_400, importar),
         ],
         spacing=12,
         scroll=ft.ScrollMode.AUTO,

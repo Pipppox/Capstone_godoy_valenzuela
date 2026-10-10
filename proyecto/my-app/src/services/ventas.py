@@ -1,6 +1,6 @@
 from database.db import conexion
 from services import sesion
-from services.geocoding import geocodificar_y_guardar
+
 
 def _usuario_id() -> int | None:
     return (sesion.usuario() or {}).get("id")
@@ -8,7 +8,8 @@ def _usuario_id() -> int | None:
 
 def registrar(producto_id, cantidad, lugar="") -> dict:
     """Registra una venta y descuenta el stock.
-    Devuelve un resumen. Lanza ValueError con un mensaje para la pantalla."""
+    Devuelve un resumen. Lanza ValueError con un mensaje para la pantalla.
+    La geocodificación del lugar la hace la vista (CampoDireccion) antes de llamar aquí."""
     uid = _usuario_id()
     if uid is None:
         raise ValueError("Debes iniciar sesión.")
@@ -26,7 +27,7 @@ def registrar(producto_id, cantidad, lugar="") -> dict:
 
     with conexion() as conn:
         producto = conn.execute(
-            "SELECT * FROM productos WHERE id = ? AND usuario_id = ?",
+            "SELECT * FROM productos WHERE id = ? AND usuario_id = ? AND activo = 1",
             (producto_id, uid),
         ).fetchone()
 
@@ -45,7 +46,7 @@ def registrar(producto_id, cantidad, lugar="") -> dict:
                (usuario_id, producto_id, cantidad, precio_unitario, total, lugar)
                VALUES (?, ?, ?, ?, ?, ?)""",
             (uid, producto_id, cantidad, producto["precio"], total,
-            (lugar or "").strip().title() or None),
+             (lugar or "").strip() or None),
         )
 
         conn.execute(
@@ -54,8 +55,7 @@ def registrar(producto_id, cantidad, lugar="") -> dict:
         )
 
         stock_nuevo = producto["stock"] - cantidad
-    if lugar:
-            geocodificar_y_guardar(lugar)
+
     return {
         "nombre": producto["nombre"],
         "cantidad": cantidad,
@@ -65,7 +65,8 @@ def registrar(producto_id, cantidad, lugar="") -> dict:
 
 
 def ventas_del_dia() -> dict:
-    """Monto y cantidad vendidos hoy (para el dashboard)."""
+    """Monto y cantidad vendidos hoy (para el dashboard).
+    Incluye ventas de productos eliminados: la venta ocurrió igual."""
     uid = _usuario_id()
     if uid is None:
         return {"monto": 0, "unidades": 0}

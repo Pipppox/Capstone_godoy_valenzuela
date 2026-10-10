@@ -5,6 +5,7 @@ cd proyecto
 pip install flet
 python -m venv .venv
 .\.venv\Scripts\activate -> para activar el entorno
+pip install openpyxl
 cd my-app
 pip install flet
 pip install python-dotenv 
