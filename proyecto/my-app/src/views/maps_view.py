@@ -2,9 +2,9 @@ import webbrowser
 
 import flet as ft
 
-from services.geocoding import obtener_marcadores, generar_url_mapa, generar_url_google_maps
+from services.geocoding import obtener_marcadores, generar_url_google_maps
 from services import sesion
-
+from components.mapa import crear_mapa
 
 
 def maps_view(page: ft.Page):
@@ -34,26 +34,8 @@ def maps_view(page: ft.Page):
         size=11, color=ft.Colors.GREY_400, text_align=ft.TextAlign.CENTER,
     )
 
-    # ---------- Mapa estático ----------
-    url_mapa = generar_url_mapa(ancho=600, alto=400, marcadores=marcadores)
-
-    if url_mapa:
-        mapa = ft.Container(
-            content=ft.Image(
-                src=url_mapa,
-                fit=ft.BoxFit.COVER,
-            ),
-            border_radius=14,
-            clip_behavior=ft.ClipBehavior.HARD_EDGE,
-            height=280,
-        )
-    else:
-        mapa = ft.Container(
-            content=ft.Text("No se pudo cargar el mapa.\nVerifica tu API key.",
-                            size=12, color=ft.Colors.GREY_500, text_align=ft.TextAlign.CENTER),
-            height=280,
-            alignment=ft.Alignment.CENTER,
-        )
+    # ---------- Mapa dinámico ----------
+    mapa = crear_mapa(marcadores, alto=280, etiquetas=True)
 
     # ---------- Botón abrir en Google Maps ----------
     def abrir_en_navegador(e):
@@ -75,6 +57,7 @@ def maps_view(page: ft.Page):
         height=42,
         style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=25)),
         on_click=abrir_en_navegador,
+        disabled=not marcadores,
     )
 
     # ---------- Lista de lugares ----------
@@ -90,7 +73,7 @@ def maps_view(page: ft.Page):
                                             text_align=ft.TextAlign.CENTER),
                             width=26,
                             height=26,
-                            bgcolor=ft.Colors.RED_700,
+                            bgcolor=ft.Colors.ORANGE_800,
                             border_radius=13,
                             alignment=ft.Alignment.CENTER,
                         ),

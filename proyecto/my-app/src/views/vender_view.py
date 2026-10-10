@@ -1,7 +1,8 @@
 import flet as ft
 
 from services import productos, ventas, sesion
-from services.geocoding import autocompletar, guardar_lugar_desde_place
+from services.geocoding import geocodificar_y_guardar
+from components.campo_direccion import CampoDireccion
 
 
 def vender_view(page: ft.Page):
@@ -31,72 +32,8 @@ def vender_view(page: ft.Page):
         color=ft.Colors.WHITE,
     )
 
-    # ---------- Autocompletado de lugar ----------
-    lugar_seleccionado = {"place_id": None, "descripcion": ""}
-
-    txt_lugar = ft.TextField(
-        label="Lugar de venta",
-        hint_text="Buscar lugar...",
-        border_color=ft.Colors.GREY_700,
-        color=ft.Colors.WHITE,
-    )
-
-    lista_sugerencias = ft.Column(visible=False, spacing=2)
-
-    def on_lugar_change(e):
-        texto = txt_lugar.value or ""
-        lugar_seleccionado["place_id"] = None
-        lugar_seleccionado["descripcion"] = ""
-
-        if len(texto) < 3:
-            lista_sugerencias.visible = False
-            page.update()
-            return
-
-        sugerencias = autocompletar(texto)
-
-        if not sugerencias:
-            lista_sugerencias.visible = False
-            page.update()
-            return
-
-        lista_sugerencias.controls.clear()
-        for s in sugerencias:
-            lista_sugerencias.controls.append(
-                ft.Container(
-                    content=ft.Row(
-                        controls=[
-                            ft.Icon(ft.Icons.LOCATION_ON, color=ft.Colors.RED_400, size=16),
-                            ft.Text(s["descripcion"], size=12, color=ft.Colors.WHITE,
-                                    expand=True, max_lines=2),
-                        ],
-                        spacing=8,
-                    ),
-                    padding=ft.Padding.symmetric(horizontal=10, vertical=8),
-                    border_radius=8,
-                    ink=True,
-                    on_click=lambda e, sug=s: seleccionar_lugar(sug),
-                )
-            )
-
-        lista_sugerencias.visible = True
-        page.update()
-
-    def seleccionar_lugar(sugerencia: dict):
-        lugar_seleccionado["place_id"] = sugerencia["place_id"]
-        lugar_seleccionado["descripcion"] = sugerencia["descripcion"]
-        txt_lugar.value = sugerencia["descripcion"]
-        lista_sugerencias.visible = False
-        page.update()
-
-    txt_lugar.on_change = on_lugar_change
-
-    contenedor_sugerencias = ft.Container(
-        content=lista_sugerencias,
-        bgcolor=ft.Colors.GREY_800,
-        border_radius=10,
-        padding=4,
-    )
+    # ---------- Lugar de venta (autocompletado + mapa) ----------
+    campo_lugar = CampoDireccion(label="Lugar de venta", alto_mapa=180)
 
     mensaje = ft.Text("", size=13, color=ft.Colors.RED_400, text_align=ft.TextAlign.CENTER)
 
@@ -116,11 +53,23 @@ def vender_view(page: ft.Page):
 
     async def vender_producto(e):
         mensaje.color = ft.Colors.RED_400
+
+        # ---- Resolver el lugar antes de registrar ----
+        lugar_texto = campo_lugar.texto()
+        geo = campo_lugar.lugar  # viene listo si eligió una sugerencia
+
+        if lugar_texto and not geo and dd_producto.value:
+            # Escribió a mano sin elegir sugerencia: respaldo con Geocoding
+            geo = geocodificar_y_guardar(lugar_texto)
+
+        # Guardar la venta con el mismo nombre que queda en lugares_cache
+        lugar_final = geo["lugar"] if geo else lugar_texto
+
         try:
             resumen = ventas.registrar(
                 dd_producto.value,
                 txt_cantidad.value,
-                txt_lugar.value,
+                lugar_final,
             )
         except ValueError as err:
             mensaje.value = str(err)
@@ -133,27 +82,10 @@ def vender_view(page: ft.Page):
             f'por ${resumen["total"]:,}'.replace(",", ".")
             + f' — quedan {resumen["stock_nuevo"]} unidades.'
         )
+        if geo:
+            mensaje.value += f'\n📍 {geo["lugar"]}'
 
-                # Geocodificar el lugar de venta
-        lugar_vendido = (txt_lugar.value or "").strip().title()
-        if lugar_seleccionado["place_id"]:
-            from services.geocoding import obtener_coordenadas_place
-            from database.db import conexion as get_conn
-            coords = obtener_coordenadas_place(lugar_seleccionado["place_id"])
-            if coords:
-                with get_conn() as conn:
-                    conn.execute(
-                        "INSERT OR REPLACE INTO lugares_cache (lugar, lat, lng) VALUES (?, ?, ?)",
-                        (lugar_vendido, coords["lat"], coords["lng"]),
-                    )
-                mensaje.value += f'\n📍 {coords.get("direccion_formateada", lugar_vendido)}'
-        elif lugar_vendido:
-            from services.geocoding import geocodificar_y_guardar
-            geo = geocodificar_y_guardar(lugar_vendido)
-            if geo:
-                mensaje.value += f'\n📍 {geo.get("lugar", lugar_vendido)}'
-                
-        # Refrescar el desplegable
+        # ---- Refrescar formulario ----
         dd_producto.options = [
             ft.dropdown.Option(
                 key=str(p["id"]),
@@ -163,13 +95,10 @@ def vender_view(page: ft.Page):
         ]
         dd_producto.value = None
         txt_cantidad.value = "1"
-        txt_lugar.value = ""
-        lugar_seleccionado["place_id"] = None
-        lugar_seleccionado["descripcion"] = ""
-        lista_sugerencias.visible = False
+        campo_lugar.limpiar()
         page.update()
 
-        # Popup de stock bajo
+        # ---- Popup de stock bajo ----
         if resumen["stock_nuevo"] <= productos.STOCK_MINIMO:
             notif_activas = bool((sesion.usuario() or {}).get("notificaciones", 0))
             if notif_activas:
@@ -231,8 +160,7 @@ def vender_view(page: ft.Page):
                 ft.Divider(height=4, color=ft.Colors.TRANSPARENT),
                 dd_producto,
                 txt_cantidad,
-                txt_lugar,
-                contenedor_sugerencias,
+                campo_lugar,
             ],
             spacing=12,
         )

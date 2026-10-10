@@ -2,6 +2,8 @@ import flet as ft
 
 from services import sesion
 from services import productos
+from services.geocoding import obtener_marcadores
+from components.mapa import crear_mapa
 
 
 def index_view(page: ft.Page):
@@ -38,7 +40,8 @@ def index_view(page: ft.Page):
         await page.push_route("/dashboard")
 
     async def ir_a_maps(e):
-            await page.push_route("/maps")
+        await page.push_route("/maps")
+
     # ---------- Encabezado ----------
     encabezado = ft.Row(
         controls=[
@@ -105,7 +108,7 @@ def index_view(page: ft.Page):
         ink=True,
     )
 
-        # ---------- Alerta de stock bajo ----------
+    # ---------- Alerta de stock bajo ----------
     bajos = productos.con_stock_bajo()
     notif_activas = bool(usuario.get("notificaciones", 0))
 
@@ -151,6 +154,7 @@ def index_view(page: ft.Page):
         on_click=ir_a_inventario,
         ink=True,
     )
+
     # ---------- Inventario ----------
     def linea_producto(nombre_producto: str, proporcion: float, color: str):
         return ft.Column(
@@ -186,33 +190,35 @@ def index_view(page: ft.Page):
         expand=True,
     )
 
-        # ---------- Maps ----------
-    from services.geocoding import generar_url_mapa, obtener_marcadores
-
+    # ---------- Maps (vista previa dinámica) ----------
     uid = usuario.get("id")
     marcadores_mapa = obtener_marcadores(usuario_id=uid)
-    url_mini_mapa = generar_url_mapa(ancho=300, alto=200, marcadores=marcadores_mapa)
 
-    if url_mini_mapa:
-        contenido_mapa = ft.Image(
-            src=url_mini_mapa,
-            fit=ft.BoxFit.COVER,
-            border_radius=14,
-        )
-    else:
-        contenido_mapa = ft.Icon(ft.Icons.MAP, color=ft.Colors.BLUE_300, size=40)
+    mini_mapa = crear_mapa(
+        marcadores_mapa,
+        alto=110,
+        interactivo=False,  # fijo: el clic lleva a la vista completa
+    )
 
     tarjeta_maps = ft.Column(
         controls=[
             ft.Text("Maps", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
             ft.Container(
-                content=contenido_mapa,
+                content=ft.Stack(
+                    controls=[
+                        mini_mapa,
+                        # Capa transparente encima que captura el clic
+                        ft.Container(
+                            left=0, top=0, right=0, bottom=0,
+                            on_click=ir_a_maps,
+                            ink=True,
+                        ),
+                    ],
+                ),
                 bgcolor=ft.Colors.BLUE_GREY_900,
                 border_radius=14,
                 height=110,
                 clip_behavior=ft.ClipBehavior.HARD_EDGE,
-                on_click=ir_a_maps,
-                ink=True,
             ),
         ],
         spacing=8,
