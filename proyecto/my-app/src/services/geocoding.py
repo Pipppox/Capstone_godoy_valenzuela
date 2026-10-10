@@ -1,8 +1,9 @@
 import os
 import json
+import time
+import uuid
 import urllib.request
 import urllib.parse
-from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -14,6 +15,13 @@ API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "")
 BASE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
 
 
+def nuevo_token() -> str:
+    return str(uuid.uuid4())
+
+
+# ============================================================
+#  GEOCODING API (respaldo cuando se escribe sin elegir sugerencia)
+# ============================================================
 def geocodificar(direccion: str) -> dict | None:
     if not API_KEY:
         print("[GEO] No hay API key configurada")
@@ -79,6 +87,10 @@ def geocodificar_y_guardar(lugar: str) -> dict | None:
 
     return {"lat": coords["lat"], "lng": coords["lng"], "lugar": nombre_lugar}
 
+
+# ============================================================
+#  MARCADORES Y ENLACES
+# ============================================================
 def obtener_marcadores(usuario_id: int = None) -> list[dict]:
     """Devuelve los lugares donde vendió el usuario, con coordenadas."""
     with conexion() as conn:
@@ -107,58 +119,6 @@ def obtener_marcadores(usuario_id: int = None) -> list[dict]:
             return []
 
 
-def generar_url_mapa(ancho=600, alto=400, zoom=13, marcadores=None) -> str | None:
-    if not API_KEY:
-        return None
-
-    # Estilo oscuro completo
-    estilos = [
-        "feature:all|element:geometry|color:0x242f3e",
-        "feature:all|element:labels.text.stroke|color:0x242f3e",
-        "feature:all|element:labels.text.fill|color:0x746855",
-        "feature:road|element:geometry|color:0x38414e",
-        "feature:road|element:geometry.stroke|color:0x212a37",
-        "feature:water|element:geometry|color:0x17263c",
-        "feature:poi|element:labels|visibility:off",
-    ]
-
-    params = [
-        ("size", f"{ancho}x{alto}"),
-        ("scale", "2"),
-        ("maptype", "roadmap"),
-        ("key", API_KEY),
-    ]
-
-    for estilo in estilos:
-        params.append(("style", estilo))
-
-    if marcadores:
-        # Calcular centro y zoom apropiado
-        lats = [m["lat"] for m in marcadores]
-        lngs = [m["lng"] for m in marcadores]
-        centro_lat = sum(lats) / len(lats)
-        centro_lng = sum(lngs) / len(lngs)
-
-        # Marcadores con etiqueta
-        for i, m in enumerate(marcadores):
-            label = chr(65 + i) if i < 26 else ""
-            params.append(("markers", f"color:red|label:{label}|{m['lat']},{m['lng']}"))
-
-        # Si los marcadores están muy separados, dejar que Google ajuste el zoom
-        lat_diff = max(lats) - min(lats)
-        lng_diff = max(lngs) - min(lngs)
-
-        if lat_diff < 0.05 and lng_diff < 0.05:
-            params.append(("center", f"{centro_lat},{centro_lng}"))
-            params.append(("zoom", "14"))
-        # Si no, Google ajusta automáticamente al no pasar center ni zoom
-    else:
-        params.append(("center", "-33.45,-70.65"))
-        params.append(("zoom", str(zoom)))
-
-    return f"https://maps.googleapis.com/maps/api/staticmap?{urllib.parse.urlencode(params)}"
-
-
 def generar_url_google_maps(marcadores: list[dict]) -> str:
     """Genera una URL de Google Maps web para abrir en el navegador."""
     if not marcadores:
@@ -180,19 +140,27 @@ def generar_url_google_maps(marcadores: list[dict]) -> str:
     else:
         return f"https://www.google.com/maps/dir/{origen}/{destino}"
 
+
+# ============================================================
+#  PLACES API (NEW) - autocompletado de direcciones
+# ============================================================
 AUTOCOMPLETE_URL_NEW = "https://places.googleapis.com/v1/places:autocomplete"
 PLACE_DETAILS_URL_NEW = "https://places.googleapis.com/v1/places"
 
 
-def autocompletar(texto: str) -> list[dict]:
-    if not API_KEY or not texto or len(texto) < 3:
+def autocompletar(texto: str, token: str | None = None) -> list[dict]:
+    if not API_KEY or not texto or len(texto.strip()) < 3:
         return []
 
-    body = json.dumps({
-        "input": texto,
+    payload = {
+        "input": texto.strip(),
         "includedRegionCodes": ["cl"],
         "languageCode": "es",
-    }).encode("utf-8")
+    }
+    if token:
+        payload["sessionToken"] = token
+
+    body = json.dumps(payload).encode("utf-8")
 
     req = urllib.request.Request(
         AUTOCOMPLETE_URL_NEW,
@@ -220,11 +188,17 @@ def autocompletar(texto: str) -> list[dict]:
         if s.get("placePrediction")
     ]
 
-def obtener_coordenadas_place(place_id: str) -> dict | None:
+
+def obtener_coordenadas_place(place_id: str, token: str | None = None) -> dict | None:
     if not API_KEY or not place_id:
         return None
 
     url = f"{PLACE_DETAILS_URL_NEW}/{place_id}"
+    params = {"languageCode": "es"}
+    if token:
+        params["sessionToken"] = token
+    url += "?" + urllib.parse.urlencode(params)
+
     req = urllib.request.Request(
         url,
         headers={
@@ -256,13 +230,13 @@ def obtener_coordenadas_place(place_id: str) -> dict | None:
     }
 
 
-def guardar_lugar_desde_place(place_id: str, nombre: str) -> dict | None:
-    """Geocodifica con place_id y guarda en cache."""
-    coords = obtener_coordenadas_place(place_id)
+def guardar_lugar_desde_place(place_id: str, nombre: str, token: str | None = None) -> dict | None:
+    """Obtiene coordenadas con place_id y guarda en cache."""
+    coords = obtener_coordenadas_place(place_id, token)
     if coords is None:
         return None
 
-    lugar_nombre = coords.get("direccion_formateada", nombre)
+    lugar_nombre = coords.get("direccion_formateada") or nombre
 
     with conexion() as conn:
         existente = conn.execute(
@@ -279,3 +253,67 @@ def guardar_lugar_desde_place(place_id: str, nombre: str) -> dict | None:
         )
 
     return {"lat": coords["lat"], "lng": coords["lng"], "lugar": lugar_nombre}
+
+
+# ============================================================
+#  MAP TILES API - imágenes del mapa de Google para flet-map
+# ============================================================
+TILES_SESSION_URL = "https://tile.googleapis.com/v1/createSession"
+
+ESTILO_OSCURO_GOOGLE = [
+    {"elementType": "geometry", "stylers": [{"color": "#242f3e"}]},
+    {"elementType": "labels.text.stroke", "stylers": [{"color": "#242f3e"}]},
+    {"elementType": "labels.text.fill", "stylers": [{"color": "#9ca5b3"}]},
+    {"featureType": "road", "elementType": "geometry", "stylers": [{"color": "#38414e"}]},
+    {"featureType": "road", "elementType": "geometry.stroke", "stylers": [{"color": "#212a37"}]},
+    {"featureType": "road.highway", "elementType": "geometry", "stylers": [{"color": "#746855"}]},
+    {"featureType": "water", "elementType": "geometry", "stylers": [{"color": "#17263c"}]},
+    # Sin íconos de negocios, paraderos ni estaciones
+    {"featureType": "poi", "stylers": [{"visibility": "off"}]},
+    {"featureType": "transit", "stylers": [{"visibility": "off"}]},
+    {"elementType": "labels.icon", "stylers": [{"visibility": "off"}]},
+]
+
+_sesiones_tiles: dict = {}  # cache en memoria: {"oscuro": {...}, "claro": {...}}
+
+
+def sesion_tiles_google(oscuro: bool = True) -> str | None:
+    """Obtiene (y reutiliza) un token de sesión de Map Tiles API."""
+    if not API_KEY:
+        return None
+
+    clave = "oscuro" if oscuro else "claro"
+    guardada = _sesiones_tiles.get(clave)
+    if guardada and guardada["expira"] > time.time() + 3600:
+        return guardada["token"]
+
+    payload = {"mapType": "roadmap", "language": "es-CL", "region": "CL"}
+    if oscuro:
+        payload["styles"] = ESTILO_OSCURO_GOOGLE
+
+    req = urllib.request.Request(
+        f"{TILES_SESSION_URL}?key={API_KEY}",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode())
+    except Exception as e:
+        print(f"[GEO] Error sesión de tiles: {e}")
+        return None
+
+    token = data.get("session")
+    if not token:
+        print(f"[GEO] Respuesta sin sesión de tiles: {data}")
+        return None
+
+    try:
+        expira = int(data.get("expiry"))
+    except (TypeError, ValueError):
+        expira = int(time.time() + 86400)
+
+    _sesiones_tiles[clave] = {"token": token, "expira": expira}
+    return token

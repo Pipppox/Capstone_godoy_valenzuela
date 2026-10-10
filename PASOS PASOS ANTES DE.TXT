@@ -7,6 +7,7 @@ python -m venv .venv
 .\.venv\Scripts\activate -> para activar el entorno
 cd my-app
 pip install flet
+pip install python-dotenv 
 deactivate -> para salir del entorno
 -----------------------------------------------------
 Entorno virtual 
@@ -36,5 +37,11 @@ cd my-app
 flet run -r src/main.py 
 
 COMANDO PARA PODER EJECUTAR EL PROYECTO EN TIEMPO REAL
+
+flet run --web -r src/main.py
+
+COMANDO PARA PODER EJECUTAR EL PROYECTO EN TIEMPO REAL DEL NAVEGADOR
+ 
+ flet run --android -r src/main.py
 
 -----------------------
