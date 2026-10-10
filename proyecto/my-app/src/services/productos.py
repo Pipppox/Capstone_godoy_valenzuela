@@ -12,12 +12,13 @@ def _usuario_id() -> int | None:
 
 # ---------- Consultas ----------
 def listar() -> list[dict]:
+    """Solo productos activos (los eliminados no se muestran)."""
     uid = _usuario_id()
     if uid is None:
         return []
     with conexion() as conn:
         filas = conn.execute(
-            "SELECT * FROM productos WHERE usuario_id = ? ORDER BY nombre",
+            "SELECT * FROM productos WHERE usuario_id = ? AND activo = 1 ORDER BY nombre",
             (uid,),
         ).fetchall()
     return [dict(f) for f in filas]
@@ -44,13 +45,8 @@ def color_stock(stock: int) -> str:
     return ft.Colors.GREEN_400
 
 
-# ---------- Alta ----------
-def crear(codigo, nombre, categoria, precio, stock) -> None:
-    """Registra un producto. Lanza ValueError con un mensaje para la pantalla."""
-    uid = _usuario_id()
-    if uid is None:
-        raise ValueError("Debes iniciar sesión.")
-
+# ---------- Validación compartida ----------
+def _validar(codigo, nombre, categoria, precio, stock) -> tuple:
     codigo = (codigo or "").strip().upper()
     nombre = (nombre or "").strip()
     categoria = (categoria or "").strip()
@@ -69,9 +65,21 @@ def crear(codigo, nombre, categoria, precio, stock) -> None:
     if stock < 0:
         raise ValueError("El stock no puede ser negativo.")
 
+    return codigo, nombre, categoria, precio, stock
+
+
+# ---------- Alta ----------
+def crear(codigo, nombre, categoria, precio, stock) -> None:
+    """Registra un producto. Lanza ValueError con un mensaje para la pantalla."""
+    uid = _usuario_id()
+    if uid is None:
+        raise ValueError("Debes iniciar sesión.")
+
+    codigo, nombre, categoria, precio, stock = _validar(codigo, nombre, categoria, precio, stock)
+
     with conexion() as conn:
         existe = conn.execute(
-            "SELECT 1 FROM productos WHERE usuario_id = ? AND codigo = ?",
+            "SELECT 1 FROM productos WHERE usuario_id = ? AND codigo = ? AND activo = 1",
             (uid, codigo),
         ).fetchone()
         if existe:
@@ -83,49 +91,47 @@ def crear(codigo, nombre, categoria, precio, stock) -> None:
             (uid, codigo, nombre, categoria, precio, stock),
         )
 
+
+# ---------- Baja (eliminación suave) ----------
 def eliminar(producto_id: int) -> None:
+    """Oculta el producto sin borrar sus ventas.
+    Así el historial, el dashboard y el mapa de lugares se mantienen."""
     uid = _usuario_id()
     if uid is None:
         raise ValueError("Debes iniciar sesión.")
 
     with conexion() as conn:
         producto = conn.execute(
-            "SELECT id FROM productos WHERE id = ? AND usuario_id = ?",
+            "SELECT id FROM productos WHERE id = ? AND usuario_id = ? AND activo = 1",
             (producto_id, uid),
         ).fetchone()
         if producto is None:
             raise ValueError("El producto no existe.")
 
-        conn.execute("DELETE FROM ventas WHERE producto_id = ?", (producto_id,))
-        conn.execute("DELETE FROM productos WHERE id = ?", (producto_id,))
+        # Se renombra el código para liberarlo: así se puede volver a crear
+        # un producto nuevo con el mismo código (la tabla exige códigos únicos).
+        conn.execute(
+            """UPDATE productos
+               SET activo = 0,
+                   stock = 0,
+                   codigo = codigo || '#ELIM' || id
+               WHERE id = ?""",
+            (producto_id,),
+        )
 
 
+# ---------- Modificación ----------
 def actualizar(producto_id: int, codigo: str, nombre: str, categoria: str, precio, stock) -> None:
     uid = _usuario_id()
     if uid is None:
         raise ValueError("Debes iniciar sesión.")
 
-    codigo = (codigo or "").strip().upper()
-    nombre = (nombre or "").strip()
-    categoria = (categoria or "").strip()
-
-    if not all([codigo, nombre, categoria]):
-        raise ValueError("Completa código, nombre y categoría.")
-
-    try:
-        precio = int(str(precio).replace(".", "").replace("$", "").strip())
-        stock = int(str(stock).strip())
-    except ValueError:
-        raise ValueError("Precio y stock deben ser números enteros.")
-
-    if precio <= 0:
-        raise ValueError("El precio debe ser mayor que 0.")
-    if stock < 0:
-        raise ValueError("El stock no puede ser negativo.")
+    codigo, nombre, categoria, precio, stock = _validar(codigo, nombre, categoria, precio, stock)
 
     with conexion() as conn:
         duplicado = conn.execute(
-            "SELECT 1 FROM productos WHERE usuario_id = ? AND codigo = ? AND id != ?",
+            """SELECT 1 FROM productos
+               WHERE usuario_id = ? AND codigo = ? AND id != ? AND activo = 1""",
             (uid, codigo, producto_id),
         ).fetchone()
         if duplicado:
@@ -133,6 +139,6 @@ def actualizar(producto_id: int, codigo: str, nombre: str, categoria: str, preci
 
         conn.execute(
             """UPDATE productos SET codigo = ?, nombre = ?, categoria = ?, precio = ?, stock = ?
-               WHERE id = ? AND usuario_id = ?""",
+               WHERE id = ? AND usuario_id = ? AND activo = 1""",
             (codigo, nombre, categoria, precio, stock, producto_id, uid),
-        )        
+        )

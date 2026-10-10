@@ -1,9 +1,31 @@
+from pathlib import Path
+
 import flet as ft
 
-from services import productos
+from services import productos, inventario_io
+
+
+def _obtener_picker(page: ft.Page) -> ft.FilePicker:
+    """En Flet 1.0 FilePicker es un servicio: se registra una sola vez en page.services."""
+    for servicio in page.services:
+        if isinstance(servicio, ft.FilePicker):
+            return servicio
+    picker = ft.FilePicker()
+    page.services.append(picker)
+    return picker
 
 
 def inventario_view(page: ft.Page):
+    picker = _obtener_picker(page)
+
+    def carpeta_descargas() -> str | None:
+        """Carpeta inicial de los diálogos: Descargas (fuera del proyecto).
+        Así el archivo no cae dentro de src/ y 'flet run -r' no reinicia la app."""
+        if page.web:
+            return None
+        descargas = Path.home() / "Downloads"
+        return str(descargas if descargas.exists() else Path.home())
+
     # ---------- Navegación ----------
     async def volver(e):
         await page.push_route("/index")
@@ -15,12 +37,7 @@ def inventario_view(page: ft.Page):
         await page.push_route("/vender")
 
     async def ir_a_perfil(e):
-            await page.push_route("/perfil_usuario")  
-
-    def proximamente(nombre_vista: str):
-        async def _handler(e):
-            print(f"[AVISO] {nombre_vista}: próximamente")
-        return _handler
+        await page.push_route("/perfil_usuario")
 
     # ---------- Estado ----------
     lista = productos.listar()
@@ -28,6 +45,10 @@ def inventario_view(page: ft.Page):
 
     contenedor_productos = ft.Column(spacing=14)
     mensaje = ft.Text("", size=13, color=ft.Colors.GREEN_400, text_align=ft.TextAlign.CENTER)
+
+    def mostrar_mensaje(texto: str, ok: bool = True):
+        mensaje.color = ft.Colors.GREEN_400 if ok else ft.Colors.RED_400
+        mensaje.value = texto
 
     def refrescar():
         nonlocal lista, maximo
@@ -57,7 +78,7 @@ def inventario_view(page: ft.Page):
                     ft.Text(f'¿Eliminar "{producto["nombre"]}"?',
                             size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE,
                             text_align=ft.TextAlign.CENTER),
-                    ft.Text("Se eliminarán también sus ventas registradas.",
+                    ft.Text("Sus ventas se conservan en el historial.",
                             size=11, color=ft.Colors.GREY_400, text_align=ft.TextAlign.CENTER),
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                     ft.Row(
@@ -90,11 +111,9 @@ def inventario_view(page: ft.Page):
     def confirmar_eliminar(e):
         try:
             productos.eliminar(producto_a_eliminar["id"])
-            mensaje.color = ft.Colors.GREEN_400
-            mensaje.value = f'"{producto_a_eliminar["nombre"]}" eliminado.'
+            mostrar_mensaje(f'"{producto_a_eliminar["nombre"]}" eliminado.')
         except ValueError as err:
-            mensaje.color = ft.Colors.RED_400
-            mensaje.value = str(err)
+            mostrar_mensaje(str(err), ok=False)
         panel_confirmar.visible = False
         refrescar()
 
@@ -143,8 +162,7 @@ def inventario_view(page: ft.Page):
             page.update()
             return
 
-        mensaje.color = ft.Colors.GREEN_400
-        mensaje.value = "Producto actualizado."
+        mostrar_mensaje("Producto actualizado.")
         panel_editar.visible = False
         panel_lista.visible = True
         refrescar()
@@ -194,6 +212,277 @@ def inventario_view(page: ft.Page):
         ],
         spacing=10,
     )
+
+    # ---------- Exportar ----------
+    panel_exportar = ft.Container(visible=False)
+
+    def mostrar_exportar(e):
+        panel_exportar.visible = not panel_exportar.visible
+        page.update()
+
+    def exportar(formato: str):
+        async def handler(e):
+            panel_exportar.visible = False
+            if not lista:
+                mostrar_mensaje("No hay productos para exportar.", ok=False)
+                page.update()
+                return
+
+            try:
+                if formato == "xlsx":
+                    datos = inventario_io.exportar_excel()
+                else:
+                    datos = inventario_io.exportar_csv()
+            except Exception as err:
+                mostrar_mensaje(f"No se pudo generar el archivo: {err}", ok=False)
+                page.update()
+                return
+
+            nombre = inventario_io.nombre_archivo(formato)
+            ruta = await picker.save_file(
+                dialog_title="Guardar inventario",
+                file_name=nombre,
+                initial_directory=carpeta_descargas(),
+                file_type=ft.FilePickerFileType.CUSTOM,
+                allowed_extensions=[formato],
+                src_bytes=datos,
+            )
+
+            if page.web:
+                mostrar_mensaje(f"Descargado como {nombre}")
+            elif ruta:
+                mostrar_mensaje(f"Inventario exportado ({len(lista)} productos).")
+            else:
+                mostrar_mensaje("Exportación cancelada.", ok=False)
+            page.update()
+        return handler
+
+    def boton_formato(texto, icono, color, handler):
+        return ft.Button(
+            content=ft.Row(
+                controls=[
+                    ft.Icon(icono, color=ft.Colors.WHITE, size=16),
+                    ft.Text(texto, size=12, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                ],
+                spacing=6,
+                tight=True,
+            ),
+            bgcolor=color,
+            height=36,
+            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=20)),
+            on_click=handler,
+        )
+
+    panel_exportar.content = ft.Container(
+        content=ft.Column(
+            controls=[
+                ft.Text("¿En qué formato?", size=13, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                ft.Row(
+                    controls=[
+                        boton_formato("Excel", ft.Icons.TABLE_CHART, ft.Colors.GREEN_700, exportar("xlsx")),
+                        boton_formato("CSV", ft.Icons.DESCRIPTION, ft.Colors.BLUE_GREY_700, exportar("csv")),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    spacing=10,
+                ),
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=10,
+        ),
+        bgcolor=ft.Colors.BLACK,
+        border_radius=14,
+        padding=14,
+        border=ft.Border.all(1, ft.Colors.GREY_800),
+    )
+
+    # ---------- Importar ----------
+    mensaje_importar = ft.Text("", size=12, text_align=ft.TextAlign.CENTER)
+
+    def resultado_importar(texto: str, ok: bool):
+        """Muestra el resultado arriba (mensaje) y junto al botón (mensaje_importar)."""
+        mostrar_mensaje(texto, ok)
+        mensaje_importar.value = texto
+        mensaje_importar.color = ft.Colors.GREEN_400 if ok else ft.Colors.RED_400
+
+    async def importar(e):
+        mensaje_importar.value = ""
+        try:
+            archivos = await picker.pick_files(
+                dialog_title="Selecciona un archivo de inventario",
+                initial_directory=carpeta_descargas(),
+                file_type=ft.FilePickerFileType.CUSTOM,
+                allowed_extensions=["xlsx", "csv"],
+                with_data=True,
+            )
+        except Exception as err:
+            print(f"[IMPORTAR] Error al abrir el selector: {err!r}")
+            resultado_importar(f"No se pudo abrir el selector de archivos: {err}", ok=False)
+            page.update()
+            return
+
+        if not archivos:
+            print("[IMPORTAR] Selección cancelada")
+            return
+
+        archivo = archivos[0]
+        print(f"[IMPORTAR] Archivo: {archivo.name} | path={archivo.path} | "
+              f"bytes={'sí' if archivo.bytes else 'no'}")
+
+        try:
+            datos = archivo.bytes
+            if datos is None and archivo.path:
+                datos = Path(archivo.path).read_bytes()
+        except PermissionError:
+            resultado_importar(
+                "No se pudo leer el archivo. ¿Está abierto en Excel? Ciérralo e intenta de nuevo.",
+                ok=False,
+            )
+            page.update()
+            return
+        except Exception as err:
+            print(f"[IMPORTAR] Error leyendo el archivo: {err!r}")
+            resultado_importar(f"No se pudo leer el archivo: {err}", ok=False)
+            page.update()
+            return
+
+        try:
+            analisis = inventario_io.analizar(archivo.name, datos)
+        except ValueError as err:
+            print(f"[IMPORTAR] {err}")
+            resultado_importar(str(err), ok=False)
+            page.update()
+            return
+        except Exception as err:
+            print(f"[IMPORTAR] Error inesperado: {err!r}")
+            resultado_importar(f"Error al importar: {err}", ok=False)
+            page.update()
+            return
+
+        print(
+            f'[IMPORTAR] Análisis: {len(analisis["nuevos"])} nuevos, '
+            f'{len(analisis["actualizar"])} a actualizar, '
+            f'{len(analisis["conflictos"])} conflictos, {len(analisis["errores"])} errores'
+        )
+        mostrar_resumen_importacion(analisis)
+
+    # ---------- Resumen antes de importar (alerta de conflictos) ----------
+    panel_importar = ft.Container(visible=False)
+    importacion_pendiente: dict = {}
+
+    def _lineas(titulo: str, color, items: list[str], maximo: int = 3):
+        if not items:
+            return []
+        controles = [ft.Text(titulo, size=12, weight=ft.FontWeight.BOLD, color=color)]
+        for item in items[:maximo]:
+            controles.append(ft.Text(f"• {item}", size=11, color=ft.Colors.GREY_300))
+        if len(items) > maximo:
+            controles.append(ft.Text(f"(+{len(items) - maximo} más)", size=11, color=ft.Colors.GREY_500))
+        return controles
+
+    def mostrar_resumen_importacion(analisis: dict):
+        importacion_pendiente.clear()
+        importacion_pendiente.update(analisis)
+
+        n_nuevos = len(analisis["nuevos"])
+        n_actualizar = len(analisis["actualizar"])
+        hay_algo = n_nuevos + n_actualizar > 0
+
+        contenido = [
+            ft.Text("Revisar importación", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+            ft.Text(f"✓ {n_nuevos} productos nuevos", size=12, color=ft.Colors.GREEN_400),
+            ft.Text(f"↻ {n_actualizar} se actualizarán (mismo código y nombre)",
+                    size=12, color=ft.Colors.BLUE_300),
+        ]
+        contenido += _lineas(
+            f'⚠ {len(analisis["conflictos"])} con código ya usado por otro producto (no se importarán):',
+            ft.Colors.AMBER_600, analisis["conflictos"],
+        )
+        contenido += _lineas(
+            f'✕ {len(analisis["errores"])} filas con error (no se importarán):',
+            ft.Colors.RED_400, analisis["errores"],
+        )
+        if not hay_algo:
+            contenido.append(ft.Text("No hay productos válidos para importar.",
+                                     size=12, color=ft.Colors.GREY_400))
+
+        if hay_algo:
+            botones = [
+                ft.Button(
+                    content=ft.Text("Importar", size=12, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                    bgcolor=ft.Colors.BLUE_600,
+                    height=36,
+                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=20)),
+                    on_click=confirmar_importacion,
+                ),
+                ft.Button(
+                    content=ft.Text("Cancelar", size=12, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                    bgcolor=ft.Colors.GREY_700,
+                    height=36,
+                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=20)),
+                    on_click=cancelar_importacion,
+                ),
+            ]
+        else:
+            # Nada que importar: solo se puede cerrar el panel
+            botones = [
+                ft.Button(
+                    content=ft.Text("Cerrar", size=12, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                    bgcolor=ft.Colors.GREY_700,
+                    height=36,
+                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=20)),
+                    on_click=cerrar_resumen,
+                ),
+            ]
+
+        contenido.append(
+            ft.Row(
+                controls=botones,
+                alignment=ft.MainAxisAlignment.CENTER,
+                spacing=10,
+            )
+        )
+
+        hay_problemas = analisis["conflictos"] or analisis["errores"]
+        panel_importar.content = ft.Container(
+            content=ft.Column(controls=contenido, spacing=6),
+            bgcolor=ft.Colors.BLACK,
+            border_radius=14,
+            padding=14,
+            border=ft.Border.all(1, ft.Colors.AMBER_600 if hay_problemas else ft.Colors.GREY_800),
+        )
+        panel_importar.visible = True
+        mensaje_importar.value = ""
+        page.update()
+
+    def confirmar_importacion(e):
+        resultado = inventario_io.aplicar(importacion_pendiente)
+        omitidos = len(importacion_pendiente.get("conflictos", [])) + len(importacion_pendiente.get("errores", []))
+        importacion_pendiente.clear()
+        panel_importar.visible = False
+
+        texto = (
+            f'Importación lista: {resultado["creados"]} nuevos, '
+            f'{resultado["actualizados"]} actualizados.'
+        )
+        if omitidos:
+            texto += f" {omitidos} filas omitidas."
+        if resultado["errores"]:
+            texto += "\n" + "\n".join(resultado["errores"][:3])
+        print(f"[IMPORTAR] {texto}")
+        resultado_importar(texto, ok=not resultado["errores"])
+        refrescar()
+
+    def cancelar_importacion(e):
+        importacion_pendiente.clear()
+        panel_importar.visible = False
+        resultado_importar("Importación cancelada.", ok=False)
+        page.update()
+
+    def cerrar_resumen(e):
+        importacion_pendiente.clear()
+        panel_importar.visible = False
+        resultado_importar("No se importó nada: revisa los conflictos del archivo.", ok=False)
+        page.update()
 
     # ---------- Fila de producto ----------
     def fila_producto(producto: dict):
@@ -298,6 +587,11 @@ def inventario_view(page: ft.Page):
             ft.Divider(height=8, color=ft.Colors.TRANSPARENT),
             boton_accion("Agregar Producto", ft.Icons.ADD_BOX, ft.Colors.ORANGE_800, ir_a_agregar),
             boton_accion("Vender Producto", ft.Icons.SELL, ft.Colors.RED_400, ir_a_vender),
+            boton_accion("Exportar inventario", ft.Icons.FILE_DOWNLOAD, ft.Colors.GREEN_400, mostrar_exportar),
+            panel_exportar,
+            boton_accion("Importar inventario", ft.Icons.FILE_UPLOAD, ft.Colors.BLUE_400, importar),
+            panel_importar,
+            mensaje_importar,
         ],
         spacing=12,
         scroll=ft.ScrollMode.AUTO,

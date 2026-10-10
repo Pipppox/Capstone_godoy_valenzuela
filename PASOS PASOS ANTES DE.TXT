@@ -5,6 +5,8 @@ cd proyecto
 pip install flet
 python -m venv .venv
 .\.venv\Scripts\activate -> para activar el entorno
+pip install openpyxl
+pip install cryptography
 cd my-app
 pip install flet
 pip install python-dotenv 
@@ -44,4 +46,7 @@ COMANDO PARA PODER EJECUTAR EL PROYECTO EN TIEMPO REAL DEL NAVEGADOR
  
  flet run --android -r src/main.py
 
+
+flet run src/main.py
+para ejecutar normal 
 -----------------------

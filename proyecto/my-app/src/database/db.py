@@ -35,6 +35,14 @@ def conexion():
         conn.close()
 
 
+def _agregar_columna(conn, tabla: str, definicion: str) -> None:
+    """Agrega una columna si no existe (migración simple para bases ya creadas)."""
+    try:
+        conn.execute(f"ALTER TABLE {tabla} ADD COLUMN {definicion}")
+    except sqlite3.OperationalError:
+        pass  # la columna ya existe
+
+
 def init_db():
     with conexion() as conn:
         conn.execute("""
@@ -58,6 +66,7 @@ def init_db():
                 categoria  TEXT NOT NULL,
                 precio     INTEGER NOT NULL,
                 stock      INTEGER NOT NULL,
+                activo     INTEGER NOT NULL DEFAULT 1,
                 creado_en  TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
                 UNIQUE (usuario_id, codigo),
                 FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
@@ -85,24 +94,14 @@ def init_db():
                 lng   REAL NOT NULL
             )
         """)
-                
-        
-        try:
-            conn.execute("ALTER TABLE usuarios ADD COLUMN foto_perfil TEXT")
-        except Exception:
-            pass  # la columna ya existe
 
-        try:
-            conn.execute("ALTER TABLE usuarios ADD COLUMN nombre_empresa TEXT DEFAULT ''")
-        except Exception:
-            pass
-        try:
-            conn.execute("ALTER TABLE usuarios ADD COLUMN notificaciones INTEGER DEFAULT 0")
-        except Exception:
-            pass
+        # ---------- Migraciones (columnas agregadas después) ----------
+        _agregar_columna(conn, "usuarios", "foto_perfil TEXT")
+        _agregar_columna(conn, "usuarios", "nombre_empresa TEXT DEFAULT ''")
+        _agregar_columna(conn, "usuarios", "notificaciones INTEGER DEFAULT 0")
+        # Eliminación suave: 1 = visible, 0 = eliminado (se conservan sus ventas)
+        _agregar_columna(conn, "productos", "activo INTEGER NOT NULL DEFAULT 1")
+
         filas = conn.execute("SELECT id, email, telefono FROM usuarios").fetchall()
         print(f"[DB] Archivo: {DB_PATH}")
         print(f"[DB] Usuarios registrados: {[dict(f) for f in filas]}")
-
-
-        

@@ -12,6 +12,7 @@ dependencies = [
     "flet-map",
     "python-dotenv",
     "requests",
+    "openpyxl",
 ]
 
 [dependency-groups]
