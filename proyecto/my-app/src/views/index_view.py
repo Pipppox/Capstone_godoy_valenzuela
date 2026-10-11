@@ -2,7 +2,6 @@ import flet as ft
 
 from services import sesion
 from services import productos
-from services.geocoding import obtener_marcadores
 from components.mapa import crear_mapa
 
 
@@ -14,10 +13,11 @@ def index_view(page: ft.Page):
     async def ir_a_inventario(e):
         await page.push_route("/inventario")
 
-    def proximamente(nombre_vista: str):
-        async def _handler(e):
-            print(f"[AVISO] {nombre_vista}: próximamente")
-        return _handler
+    async def ir_a_agregar(e):
+        await page.push_route("/agregar")
+
+    async def ir_a_vender(e):
+        await page.push_route("/vender")
 
     async def confirmar_logout(e):
         sesion.cerrar()
@@ -190,12 +190,8 @@ def index_view(page: ft.Page):
         expand=True,
     )
 
-    # ---------- Maps (vista previa dinámica) ----------
-    uid = usuario.get("id")
-    marcadores_mapa = obtener_marcadores(usuario_id=uid)
-
+    # ---------- Maps (vista previa, sin marcadores) ----------
     mini_mapa = crear_mapa(
-        marcadores_mapa,
         alto=110,
         interactivo=False,  # fijo: el clic lleva a la vista completa
     )
@@ -238,12 +234,13 @@ def index_view(page: ft.Page):
                     bgcolor=ft.Colors.BLUE_600,
                     border_radius=24,
                     alignment=ft.Alignment.CENTER,
-                    on_click=proximamente("Agregar producto"),
+                    tooltip="Agregar producto",
+                    on_click=ir_a_agregar,
                     ink=True,
                 ),
                 ft.IconButton(icon=ft.Icons.DELETE_OUTLINE, icon_color=ft.Colors.GREY_500,
                               icon_size=22, tooltip="Vender producto",
-                              on_click=proximamente("Vender producto")),
+                              on_click=ir_a_vender),
             ],
             alignment=ft.MainAxisAlignment.SPACE_AROUND,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
