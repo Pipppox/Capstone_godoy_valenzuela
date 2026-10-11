@@ -2,17 +2,13 @@ import webbrowser
 
 import flet as ft
 
-from services.geocoding import obtener_marcadores, generar_url_google_maps
-from services import sesion
+from services.geocoding import generar_url_google_maps
 from components.mapa import crear_mapa
 
 
 def maps_view(page: ft.Page):
     async def volver(e):
         await page.push_route("/index")
-
-    uid = (sesion.usuario() or {}).get("id")
-    marcadores = obtener_marcadores(usuario_id=uid)
 
     # ---------- Encabezado ----------
     encabezado = ft.Row(
@@ -27,20 +23,12 @@ def maps_view(page: ft.Page):
         vertical_alignment=ft.CrossAxisAlignment.CENTER,
     )
 
-    # ---------- Info ----------
-    cantidad = len(marcadores)
-    info = ft.Text(
-        f"{cantidad} lugar{'es' if cantidad != 1 else ''} de venta registrado{'s' if cantidad != 1 else ''}",
-        size=11, color=ft.Colors.GREY_400, text_align=ft.TextAlign.CENTER,
-    )
-
-    # ---------- Mapa dinámico ----------
-    mapa = crear_mapa(marcadores, alto=280, etiquetas=True)
+    # ---------- Mapa para navegar (Google Maps) ----------
+    mapa = crear_mapa(alto=500)
 
     # ---------- Botón abrir en Google Maps ----------
     def abrir_en_navegador(e):
-        url = generar_url_google_maps(marcadores)
-        webbrowser.open(url)
+        webbrowser.open(generar_url_google_maps([]))
 
     btn_abrir_maps = ft.Button(
         content=ft.Row(
@@ -57,54 +45,6 @@ def maps_view(page: ft.Page):
         height=42,
         style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=25)),
         on_click=abrir_en_navegador,
-        disabled=not marcadores,
-    )
-
-    # ---------- Lista de lugares ----------
-    if marcadores:
-        filas_lugares = [
-            ft.Container(
-                content=ft.Row(
-                    controls=[
-                        ft.Container(
-                            content=ft.Text(chr(65 + i) if i < 26 else "·",
-                                            size=11, weight=ft.FontWeight.BOLD,
-                                            color=ft.Colors.WHITE,
-                                            text_align=ft.TextAlign.CENTER),
-                            width=26,
-                            height=26,
-                            bgcolor=ft.Colors.ORANGE_800,
-                            border_radius=13,
-                            alignment=ft.Alignment.CENTER,
-                        ),
-                        ft.Text(m["lugar"], size=13, color=ft.Colors.WHITE, expand=True),
-                    ],
-                    spacing=12,
-                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                ),
-                padding=ft.Padding.symmetric(horizontal=4, vertical=8),
-            )
-            for i, m in enumerate(marcadores)
-        ]
-    else:
-        filas_lugares = [
-            ft.Text("Vende productos indicando el lugar\npara verlos aquí en el mapa.",
-                    size=12, color=ft.Colors.GREY_500, text_align=ft.TextAlign.CENTER),
-        ]
-
-    lista_lugares = ft.Container(
-        content=ft.Column(
-            controls=[
-                ft.Text("Lugares de venta", size=14, weight=ft.FontWeight.BOLD,
-                        color=ft.Colors.WHITE),
-                ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
-                *filas_lugares,
-            ],
-            spacing=4,
-        ),
-        bgcolor=ft.Colors.BLACK,
-        border_radius=14,
-        padding=18,
     )
 
     # ---------- Tarjeta Celular ----------
@@ -112,16 +52,12 @@ def maps_view(page: ft.Page):
         content=ft.Column(
             controls=[
                 encabezado,
-                info,
-                ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
+                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                 mapa,
-                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+                ft.Divider(height=16, color=ft.Colors.TRANSPARENT),
                 btn_abrir_maps,
-                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
-                lista_lugares,
             ],
             spacing=0,
-            scroll=ft.ScrollMode.AUTO,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         ),
         width=360,

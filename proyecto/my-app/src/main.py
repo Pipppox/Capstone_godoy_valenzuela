@@ -17,12 +17,16 @@ from views.configuracion import configuracion_view
 from views.dashboard_view import dashboard_view
 from views.maps_view import maps_view
 
+
 def main(page: ft.Page):
     init_db()
     page.title = "StockIN"
     page.theme_mode = ft.ThemeMode.DARK
     page.bgcolor = ft.Colors.BLACK
     page.padding = 0
+
+    # Si el usuario no cerró sesión la última vez, entra directo
+    sesion_restaurada = sesion.restaurar()
 
     # Rutas sin sesión (se apilan sobre el login)
     rutas_publicas = {
@@ -31,7 +35,6 @@ def main(page: ft.Page):
         "/iniciar_sesion_email": iniciar_sesion_email_view,
         "/iniciar_sesion_celu": iniciar_sesion_celu_view,
         "/restablecer_contra": restablecer_contra_view,
-        "/maps": maps_view,
     }
 
     # Rutas que requieren sesión (se apilan sobre el index)
@@ -44,7 +47,7 @@ def main(page: ft.Page):
         "/perfil_usuario": perfil_usuario_view,
         "/configuracion": configuracion_view,
         "/dashboard": dashboard_view,
-        "/dashboard": dashboard_view,
+        "/maps": maps_view,
     }
 
     def construir_view(route: str, builder) -> ft.View:
@@ -59,6 +62,10 @@ def main(page: ft.Page):
         page.views.clear()
         ruta = page.route
         print(f"[RUTA] {ruta} | sesión activa: {sesion.activa()}")
+
+        # Con sesión activa, las pantallas de login llevan directo al Home
+        if ruta in rutas_publicas and sesion.activa():
+            ruta = "/index"
 
         if ruta in rutas_privadas:
             if not sesion.activa():

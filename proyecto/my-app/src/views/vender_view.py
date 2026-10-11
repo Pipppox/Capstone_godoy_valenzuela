@@ -7,7 +7,7 @@ from components.campo_direccion import CampoDireccion
 
 def vender_view(page: ft.Page):
     async def volver(e):
-        await page.push_route("/inventario")
+        await page.push_route("/index")
 
     lista = productos.listar()
 
