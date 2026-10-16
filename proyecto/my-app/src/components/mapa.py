@@ -49,6 +49,15 @@ def _capas(estilo: str) -> tuple[list[str], str]:
     return [ESRI_CALLES], "Esri"
 
 
+def _estilo_por_defecto() -> str:
+    """Google oscuro en modo oscuro y Google claro en modo claro."""
+    try:
+        from services import preferencias
+        return "google_oscuro" if preferencias.modo_oscuro() else "google"
+    except Exception:
+        return ESTILO
+
+
 def _marcador(m: dict, indice: int, etiquetas: bool):
     if etiquetas:
         contenido = ft.Container(
@@ -115,7 +124,7 @@ def crear_mapa(
     Si no hay marcadores, centra en Santiago.
     """
     marcadores = marcadores or []
-    urls, atribucion = _capas(estilo or ESTILO)
+    urls, atribucion = _capas(estilo or _estilo_por_defecto())
 
     if marcadores:
         lat = sum(m["lat"] for m in marcadores) / len(marcadores)

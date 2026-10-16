@@ -13,10 +13,10 @@ def maps_view(page: ft.Page):
     # ---------- Encabezado ----------
     encabezado = ft.Row(
         controls=[
-            ft.IconButton(icon=ft.Icons.ARROW_BACK, icon_color=ft.Colors.WHITE,
+            ft.IconButton(icon=ft.Icons.ARROW_BACK, icon_color=ft.Colors.ON_SURFACE,
                           icon_size=22, on_click=volver),
             ft.Text("Maps", size=20, weight=ft.FontWeight.BOLD,
-                    color=ft.Colors.WHITE, text_align=ft.TextAlign.CENTER),
+                    color=ft.Colors.ON_SURFACE, text_align=ft.TextAlign.CENTER),
             ft.Container(width=40),
         ],
         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -62,10 +62,10 @@ def maps_view(page: ft.Page):
         ),
         width=360,
         height=680,
-        bgcolor=ft.Colors.GREY_900,
+        bgcolor=ft.Colors.SURFACE,
         border_radius=40,
         padding=ft.Padding.only(left=22, right=22, top=22, bottom=6),
-        border=ft.Border.all(2, ft.Colors.GREY_800),
+        border=ft.Border.all(2, ft.Colors.OUTLINE_VARIANT),
     )
 
     return ft.Container(

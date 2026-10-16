@@ -7,11 +7,20 @@ from services import estadisticas
 from services import productos as srv_productos
 from services import inventario_io
 from views.inventario_view import _obtener_picker
-
+from components.avatar import boton_perfil
 
 def dashboard_view(page: ft.Page):
     async def volver(e):
         await page.push_route("/index")
+
+    async def ir_a_perfil(e):
+        await page.push_route("/perfil_usuario")
+
+    async def ir_a_agregar(e):
+        await page.push_route("/agregar")
+
+    async def ir_a_vender(e):
+        await page.push_route("/vender")
 
     def proximamente(nombre: str):
         def handler(e):
@@ -38,27 +47,14 @@ def dashboard_view(page: ft.Page):
                           style=ft.ButtonStyle(bgcolor=ft.Colors.BLUE_600,
                                                shape=ft.CircleBorder())),
             ft.Text("Informacion Ventas", size=18, weight=ft.FontWeight.BOLD,
-                    color=ft.Colors.WHITE, text_align=ft.TextAlign.CENTER),
-            ft.IconButton(icon=ft.Icons.ACCOUNT_CIRCLE, icon_color=ft.Colors.GREY_500,
-                          icon_size=30, on_click=proximamente("Perfil")),
+                    color=ft.Colors.ON_SURFACE, text_align=ft.TextAlign.CENTER),
+            boton_perfil(page),
         ],
         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         vertical_alignment=ft.CrossAxisAlignment.CENTER,
     )
 
-    # ---------- Pestañas All / Favorito ----------
-    tab_all = ft.Container(
-        content=ft.Text("All", size=12, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
-        bgcolor=ft.Colors.BLUE_600,
-        border_radius=20,
-        padding=ft.Padding.symmetric(horizontal=20, vertical=8),
-    )
-    tab_fav = ft.Container(
-        content=ft.Text("Favorito", size=12, color=ft.Colors.GREY_500),
-        padding=ft.Padding.symmetric(horizontal=20, vertical=8),
-        on_click=proximamente("Favoritos"),
-    )
-    pestanas = ft.Row(controls=[tab_all, tab_fav], spacing=8)
+   
 
     # ---------- Gráfico de ventas ----------
     dias_7 = data["ultimos_7_dias"]
@@ -75,7 +71,7 @@ def dashboard_view(page: ft.Page):
                             bgcolor=ft.Colors.ORANGE_800,
                             border_radius=4,
                         ),
-                        ft.Text(d["dia"][-5:], size=8, color=ft.Colors.GREY_500),
+                        ft.Text(d["dia"][-5:], size=8, color=ft.Colors.ON_SURFACE_VARIANT),
                     ],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     spacing=4,
@@ -89,12 +85,12 @@ def dashboard_view(page: ft.Page):
         contenido_grafico = ft.Container(
             content=ft.Column(
                 controls=[
-                    ft.Text("Ventas últimos 7 días", size=11, color=ft.Colors.GREY_400),
+                    ft.Text("Ventas últimos 7 días", size=11, color=ft.Colors.ON_SURFACE_VARIANT),
                     ft.Divider(height=4, color=ft.Colors.TRANSPARENT),
                     ft.Container(content=barras, height=100, alignment=ft.Alignment.BOTTOM_CENTER),
                 ],
             ),
-            bgcolor=ft.Colors.GREY_900,
+            bgcolor=ft.Colors.SURFACE,
             border=ft.Border.all(2, ft.Colors.ORANGE_800),
             border_radius=12,
             padding=14,
@@ -103,13 +99,13 @@ def dashboard_view(page: ft.Page):
         contenido_grafico = ft.Container(
             content=ft.Column(
                 controls=[
-                    ft.Text("Ventas últimos 7 días", size=11, color=ft.Colors.GREY_400),
+                    ft.Text("Ventas últimos 7 días", size=11, color=ft.Colors.ON_SURFACE_VARIANT),
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
-                    ft.Text("Aún no hay ventas registradas.", size=12, color=ft.Colors.GREY_500),
+                    ft.Text("Aún no hay ventas registradas.", size=12, color=ft.Colors.ON_SURFACE_VARIANT),
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            bgcolor=ft.Colors.GREY_900,
+            bgcolor=ft.Colors.SURFACE,
             border=ft.Border.all(2, ft.Colors.ORANGE_800),
             border_radius=12,
             padding=14,
@@ -117,7 +113,7 @@ def dashboard_view(page: ft.Page):
 
     tarjeta_grafico = ft.Container(
         content=contenido_grafico,
-        bgcolor=ft.Colors.BLACK,
+        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
         border_radius=18,
         padding=10,
     )
@@ -130,13 +126,13 @@ def dashboard_view(page: ft.Page):
                     controls=[
                         ft.Icon(ft.Icons.INVENTORY_2, color=ft.Colors.BLUE_400, size=20),
                         ft.Text(str(data["total_productos"]), size=18,
-                                weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
-                        ft.Text("Productos", size=9, color=ft.Colors.GREY_400),
+                                weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
+                        ft.Text("Productos", size=9, color=ft.Colors.ON_SURFACE_VARIANT),
                     ],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     spacing=2,
                 ),
-                bgcolor=ft.Colors.BLACK,
+                bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
                 border_radius=12,
                 padding=12,
                 expand=True,
@@ -148,13 +144,13 @@ def dashboard_view(page: ft.Page):
                                 color=ft.Colors.RED_400 if data["stock_bajo"] > 0 else ft.Colors.GREEN_400,
                                 size=20),
                         ft.Text(str(data["stock_bajo"]), size=18,
-                                weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
-                        ft.Text("Stock bajo", size=9, color=ft.Colors.GREY_400),
+                                weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
+                        ft.Text("Stock bajo", size=9, color=ft.Colors.ON_SURFACE_VARIANT),
                     ],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     spacing=2,
                 ),
-                bgcolor=ft.Colors.BLACK,
+                bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
                 border_radius=12,
                 padding=12,
                 expand=True,
@@ -164,13 +160,13 @@ def dashboard_view(page: ft.Page):
                     controls=[
                         ft.Icon(ft.Icons.ATTACH_MONEY, color=ft.Colors.GREEN_400, size=20),
                         ft.Text(f'${data["ventas_dia_monto"]:,}'.replace(",", "."),
-                                size=16, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
-                        ft.Text("Ventas hoy", size=9, color=ft.Colors.GREY_400),
+                                size=16, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
+                        ft.Text("Ventas hoy", size=9, color=ft.Colors.ON_SURFACE_VARIANT),
                     ],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     spacing=2,
                 ),
-                bgcolor=ft.Colors.BLACK,
+                bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
                 border_radius=12,
                 padding=12,
                 expand=True,
@@ -199,17 +195,17 @@ def dashboard_view(page: ft.Page):
         filas_top = [
             ft.Row(
                 controls=[
-                    ft.Text(p["nombre"], size=12, color=ft.Colors.WHITE, width=90),
+                    ft.Text(p["nombre"], size=12, color=ft.Colors.ON_SURFACE, width=90),
                     ft.ProgressBar(
                         value=p["vendido"] / max(top_5[0]["vendido"], 1),
                         color=ft.Colors.GREEN_400,
-                        bgcolor=ft.Colors.GREY_800,
+                        bgcolor=ft.Colors.OUTLINE_VARIANT,
                         height=5,
                         border_radius=3,
                         expand=True,
                     ),
                     ft.Text(f'${p["monto_vendido"]:,}'.replace(",", "."),
-                            size=11, color=ft.Colors.GREY_400, width=70,
+                            size=11, color=ft.Colors.ON_SURFACE_VARIANT, width=70,
                             text_align=ft.TextAlign.RIGHT),
                 ],
                 spacing=8,
@@ -218,20 +214,20 @@ def dashboard_view(page: ft.Page):
             for p in top_5
         ]
     else:
-        filas_top = [ft.Text("Sin ventas aún.", size=12, color=ft.Colors.GREY_500)]
+        filas_top = [ft.Text("Sin ventas aún.", size=12, color=ft.Colors.ON_SURFACE_VARIANT)]
 
     seccion_mas_vendidos = ft.Container(
         content=ft.Column(
             controls=[
                 ft.Text("Mas vendidos", size=16, weight=ft.FontWeight.BOLD,
-                        color=ft.Colors.WHITE, text_align=ft.TextAlign.CENTER),
+                        color=ft.Colors.ON_SURFACE, text_align=ft.TextAlign.CENTER),
                 ft.Divider(height=8, color=ft.Colors.TRANSPARENT),
                 *filas_top,
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=10,
         ),
-        bgcolor=ft.Colors.BLACK,
+        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
         border_radius=14,
         padding=18,
     )
@@ -259,7 +255,7 @@ def dashboard_view(page: ft.Page):
                                 controls=[
                                     ft.Icon(ft.Icons.LOCATION_ON, color=ft.Colors.BLUE_400, size=18),
                                     ft.Text(lugar["lugar"], size=13, weight=ft.FontWeight.BOLD,
-                                            color=ft.Colors.WHITE, expand=True),
+                                            color=ft.Colors.ON_SURFACE, expand=True),
                                     ft.Text(f'${lugar["monto"]:,}'.replace(",", "."),
                                             size=12, color=ft.Colors.GREEN_400),
                                 ],
@@ -271,7 +267,7 @@ def dashboard_view(page: ft.Page):
                                     ft.ProgressBar(
                                         value=lugar["monto"] / max_lugar,
                                         color=ft.Colors.BLUE_400,
-                                        bgcolor=ft.Colors.GREY_800,
+                                        bgcolor=ft.Colors.OUTLINE_VARIANT,
                                         height=4,
                                         border_radius=3,
                                         expand=True,
@@ -281,7 +277,7 @@ def dashboard_view(page: ft.Page):
                             ft.Row(
                                 controls=[
                                     ft.Text(f'{lugar["unidades"]}u · {lugar["num_ventas"]} ventas',
-                                            size=10, color=ft.Colors.GREY_500),
+                                            size=10, color=ft.Colors.ON_SURFACE_VARIANT),
                                     ft.Text(f'Top: {mejor_producto}' if mejor_producto else "",
                                             size=10, color=ft.Colors.ORANGE_800, italic=True),
                                 ],
@@ -301,7 +297,7 @@ def dashboard_view(page: ft.Page):
                         controls=[
                             ft.Icon(ft.Icons.MAP, color=ft.Colors.BLUE_400, size=20),
                             ft.Text("Mejores lugares de venta", size=14,
-                                    weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                                    weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
                         ],
                         spacing=8,
                     ),
@@ -310,7 +306,7 @@ def dashboard_view(page: ft.Page):
                 ],
                 spacing=4,
             ),
-            bgcolor=ft.Colors.BLACK,
+            bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
             border_radius=14,
             padding=18,
         )
@@ -322,17 +318,17 @@ def dashboard_view(page: ft.Page):
                         controls=[
                             ft.Icon(ft.Icons.MAP, color=ft.Colors.BLUE_400, size=20),
                             ft.Text("Mejores lugares de venta", size=14,
-                                    weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                                    weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
                         ],
                         spacing=8,
                     ),
                     ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
                     ft.Text("Registra el lugar al vender para ver estadísticas aquí.",
-                            size=12, color=ft.Colors.GREY_500),
+                            size=12, color=ft.Colors.ON_SURFACE_VARIANT),
                 ],
                 spacing=4,
             ),
-            bgcolor=ft.Colors.BLACK,
+            bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
             border_radius=14,
             padding=18,
         )
@@ -358,10 +354,10 @@ def dashboard_view(page: ft.Page):
                 filas_historial.append(
                     ft.Row(
                         controls=[
-                            ft.Icon(ft.Icons.LOCATION_ON, color=ft.Colors.GREY_500, size=14),
-                            ft.Text(r["lugar"], size=11, color=ft.Colors.WHITE, width=80),
-                            ft.Text(r["producto"], size=11, color=ft.Colors.GREY_400, expand=True),
-                            ft.Text(f'{r["unidades"]}u', size=10, color=ft.Colors.GREY_500, width=30),
+                            ft.Icon(ft.Icons.LOCATION_ON, color=ft.Colors.ON_SURFACE_VARIANT, size=14),
+                            ft.Text(r["lugar"], size=11, color=ft.Colors.ON_SURFACE, width=80),
+                            ft.Text(r["producto"], size=11, color=ft.Colors.ON_SURFACE_VARIANT, expand=True),
+                            ft.Text(f'{r["unidades"]}u', size=10, color=ft.Colors.ON_SURFACE_VARIANT, width=30),
                             ft.Text(f'${r["monto"]:,}'.replace(",", "."),
                                     size=11, color=ft.Colors.GREEN_400, width=65,
                                     text_align=ft.TextAlign.RIGHT),
@@ -370,7 +366,7 @@ def dashboard_view(page: ft.Page):
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     ),
                 )
-            filas_historial.append(ft.Divider(height=8, color=ft.Colors.GREY_800))
+            filas_historial.append(ft.Divider(height=8, color=ft.Colors.OUTLINE_VARIANT))
 
         seccion_historial = ft.Container(
             content=ft.Column(
@@ -379,7 +375,7 @@ def dashboard_view(page: ft.Page):
                         controls=[
                             ft.Icon(ft.Icons.HISTORY, color=ft.Colors.ORANGE_800, size=20),
                             ft.Text("Historial por lugar", size=14,
-                                    weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                                    weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
                         ],
                         spacing=8,
                     ),
@@ -388,7 +384,7 @@ def dashboard_view(page: ft.Page):
                 ],
                 spacing=4,
             ),
-            bgcolor=ft.Colors.BLACK,
+            bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
             border_radius=14,
             padding=18,
         )
@@ -464,7 +460,7 @@ def dashboard_view(page: ft.Page):
     panel_exportar.content = ft.Container(
         content=ft.Column(
             controls=[
-                ft.Text("¿En qué formato?", size=13, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                ft.Text("¿En qué formato?", size=13, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
                 ft.Row(
                     controls=[
                         boton_formato("Excel", ft.Icons.TABLE_CHART, ft.Colors.GREEN_700, exportar_ventas("xlsx")),
@@ -477,10 +473,10 @@ def dashboard_view(page: ft.Page):
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=10,
         ),
-        bgcolor=ft.Colors.BLACK,
+        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
         border_radius=14,
         padding=14,
-        border=ft.Border.all(1, ft.Colors.GREY_800),
+        border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
     )
 
     btn_exportar = ft.Container(
@@ -490,15 +486,15 @@ def dashboard_view(page: ft.Page):
                     controls=[
                         ft.Icon(ft.Icons.FILE_DOWNLOAD, color=ft.Colors.GREEN_400, size=20),
                         ft.Text("Exportar ventas", size=13, weight=ft.FontWeight.BOLD,
-                                color=ft.Colors.WHITE),
+                                color=ft.Colors.ON_SURFACE),
                     ],
                     spacing=12,
                 ),
-                ft.Icon(ft.Icons.CHEVRON_RIGHT, color=ft.Colors.GREY_500, size=20),
+                ft.Icon(ft.Icons.CHEVRON_RIGHT, color=ft.Colors.ON_SURFACE_VARIANT, size=20),
             ],
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         ),
-        bgcolor=ft.Colors.BLACK,
+        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
         border_radius=14,
         padding=ft.Padding.symmetric(horizontal=16, vertical=14),
         on_click=mostrar_exportar,
@@ -509,16 +505,16 @@ def dashboard_view(page: ft.Page):
     barra_inferior = ft.Container(
         content=ft.Row(
             controls=[
-                ft.IconButton(icon=ft.Icons.HOME, icon_color=ft.Colors.GREY_500,
+                ft.IconButton(icon=ft.Icons.HOME, icon_color=ft.Colors.ON_SURFACE_VARIANT,
                               icon_size=22, on_click=volver),
                 ft.Container(
                     content=ft.Icon(ft.Icons.ADD, color=ft.Colors.WHITE, size=24),
                     width=48, height=48, bgcolor=ft.Colors.BLUE_600,
                     border_radius=24, alignment=ft.Alignment.CENTER,
-                    on_click=proximamente("Agregar producto"), ink=True,
+                    on_click=ir_a_agregar, ink=True,
                 ),
-                ft.IconButton(icon=ft.Icons.DELETE_OUTLINE, icon_color=ft.Colors.GREY_500,
-                              icon_size=22, on_click=proximamente("Vender producto")),
+                ft.IconButton(icon=ft.Icons.DELETE_OUTLINE, icon_color=ft.Colors.ON_SURFACE_VARIANT,
+                              icon_size=22, on_click=ir_a_vender),
             ],
             alignment=ft.MainAxisAlignment.SPACE_AROUND,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -533,9 +529,7 @@ def dashboard_view(page: ft.Page):
                 ft.Column(
                     controls=[
                         encabezado,
-                        ft.Divider(height=8, color=ft.Colors.TRANSPARENT),
-                        pestanas,
-                        ft.Divider(height=8, color=ft.Colors.TRANSPARENT),
+                        ft.Divider(height=12, color=ft.Colors.TRANSPARENT),
                         tarjeta_grafico,
                         ft.Divider(height=8, color=ft.Colors.TRANSPARENT),
                         resumen_rapido,
@@ -560,10 +554,10 @@ def dashboard_view(page: ft.Page):
         ),
         width=360,
         height=680,
-        bgcolor=ft.Colors.GREY_900,
+        bgcolor=ft.Colors.SURFACE,
         border_radius=40,
         padding=ft.Padding.only(left=22, right=22, top=22, bottom=6),
-        border=ft.Border.all(2, ft.Colors.GREY_800),
+        border=ft.Border.all(2, ft.Colors.OUTLINE_VARIANT),
     )
 
     return ft.Container(

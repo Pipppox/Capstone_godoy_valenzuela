@@ -15,32 +15,32 @@ def crear_cuenta_view(page: ft.Page):
     # Campos
     txt_nombre = ft.TextField(
         label="Nombre",
-        border_color=ft.Colors.GREY_700,
-        color=ft.Colors.WHITE,
+        border_color=ft.Colors.OUTLINE,
+        color=ft.Colors.ON_SURFACE,
         capitalization=ft.TextCapitalization.WORDS,
     )
     txt_apellido = ft.TextField(
         label="Apellido",
-        border_color=ft.Colors.GREY_700,
-        color=ft.Colors.WHITE,
+        border_color=ft.Colors.OUTLINE,
+        color=ft.Colors.ON_SURFACE,
         capitalization=ft.TextCapitalization.WORDS,
     )
     txt_email = ft.TextField(
         label="Correo electrónico",
-        border_color=ft.Colors.GREY_700,
-        color=ft.Colors.WHITE,
+        border_color=ft.Colors.OUTLINE,
+        color=ft.Colors.ON_SURFACE,
         keyboard_type=ft.KeyboardType.EMAIL,
     )
     txt_telefono = ft.TextField(
         label="Numero telefonico",
-        border_color=ft.Colors.GREY_700,
-        color=ft.Colors.WHITE,
+        border_color=ft.Colors.OUTLINE,
+        color=ft.Colors.ON_SURFACE,
         keyboard_type=ft.KeyboardType.PHONE,
     )
     txt_empresa = ft.TextField(
         label="Nombre del emprendimiento",
-        border_color=ft.Colors.GREY_700,
-        color=ft.Colors.WHITE,
+        border_color=ft.Colors.OUTLINE,
+        color=ft.Colors.ON_SURFACE,
         capitalization=ft.TextCapitalization.WORDS,
     )
 
@@ -48,8 +48,8 @@ def crear_cuenta_view(page: ft.Page):
         label="Contraseña",
         password=True,
         can_reveal_password=True,
-        border_color=ft.Colors.GREY_700,
-        color=ft.Colors.WHITE,
+        border_color=ft.Colors.OUTLINE,
+        color=ft.Colors.ON_SURFACE,
     )
 
     mensaje = ft.Text("", size=13, color=ft.Colors.RED_400, text_align=ft.TextAlign.CENTER)
@@ -94,10 +94,10 @@ def crear_cuenta_view(page: ft.Page):
                     controls=[
                         ft.IconButton(
                             icon=ft.Icons.ARROW_BACK,
-                            icon_color=ft.Colors.WHITE,
+                            icon_color=ft.Colors.ON_SURFACE,
                             on_click=volver_login,
                         ),
-                        ft.Text("Crear Cuenta", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                        ft.Text("Crear Cuenta", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
                     ],
                     alignment=ft.MainAxisAlignment.START,
                 ),
@@ -111,7 +111,7 @@ def crear_cuenta_view(page: ft.Page):
                 btn_registrar,
                 ft.TextButton(
                     content=ft.Text("¿Ya tienes cuenta? Restablece tu contraseña",
-                                    size=12, color=ft.Colors.GREY_400),
+                                    size=12, color=ft.Colors.ON_SURFACE_VARIANT),
                     on_click=ir_a_restablecer,
                 ),
             ],
@@ -121,10 +121,10 @@ def crear_cuenta_view(page: ft.Page):
         ),
         width=360,
         height=680,
-        bgcolor=ft.Colors.GREY_900,
+        bgcolor=ft.Colors.SURFACE,
         border_radius=40,
         padding=25,
-        border=ft.Border.all(2, ft.Colors.GREY_800),
+        border=ft.Border.all(2, ft.Colors.OUTLINE_VARIANT),
     )
 
     return ft.Container(

@@ -1,6 +1,7 @@
 import flet as ft
 
-from services import sesion, respaldo
+from services import sesion, respaldo, preferencias
+from components import tema
 from services.auth import actualizar_datos, actualizar_notificaciones
 
 
@@ -13,7 +14,7 @@ def configuracion_view(page: ft.Page):
     async def ir_a_eliminar(e):
         await page.push_route("/eliminar_cuenta")
 
-        # ---------- Notificaciones ----------
+    # ---------- Notificaciones ----------
     notif_activas = bool(usuario.get("notificaciones", 0))
 
     def toggle_notificaciones(e):
@@ -32,8 +33,8 @@ def configuracion_view(page: ft.Page):
             controls=[
                 ft.Row(
                     controls=[
-                        ft.Icon(ft.Icons.NOTIFICATIONS_OUTLINED, color=ft.Colors.WHITE, size=22),
-                        ft.Text("Activar Notificaciones", size=14, color=ft.Colors.WHITE),
+                        ft.Icon(ft.Icons.NOTIFICATIONS_OUTLINED, color=ft.Colors.ON_SURFACE, size=22),
+                        ft.Text("Activar Notificaciones", size=14, color=ft.Colors.ON_SURFACE),
                     ],
                     spacing=12,
                 ),
@@ -42,7 +43,37 @@ def configuracion_view(page: ft.Page):
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         ),
-        bgcolor=ft.Colors.BLACK,
+        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
+        border_radius=14,
+        padding=ft.Padding.symmetric(horizontal=16, vertical=12),
+    )
+
+    # ---------- Modo oscuro ----------
+    def toggle_modo_oscuro(e):
+        tema.cambiar_modo(page, switch_modo.value)
+
+    switch_modo = ft.Switch(
+        value=preferencias.modo_oscuro(),
+        active_color=ft.Colors.ORANGE_800,
+        on_change=toggle_modo_oscuro,
+    )
+
+    fila_modo_oscuro = ft.Container(
+        content=ft.Row(
+            controls=[
+                ft.Row(
+                    controls=[
+                        ft.Icon(ft.Icons.DARK_MODE_OUTLINED, color=ft.Colors.ON_SURFACE, size=22),
+                        ft.Text("Modo oscuro", size=14, color=ft.Colors.ON_SURFACE),
+                    ],
+                    spacing=12,
+                ),
+                switch_modo,
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+        ),
+        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
         border_radius=14,
         padding=ft.Padding.symmetric(horizontal=16, vertical=12),
     )
@@ -52,18 +83,18 @@ def configuracion_view(page: ft.Page):
         fecha = respaldo.ultimo_respaldo()
         return f"Último respaldo: {fecha}" if fecha else "Aún no has respaldado tus datos"
 
-    lbl_ultimo = ft.Text(texto_ultimo(), size=11, color=ft.Colors.GREY_500)
+    lbl_ultimo = ft.Text(texto_ultimo(), size=11, color=ft.Colors.ON_SURFACE_VARIANT)
     accion_respaldo = {"tipo": None}  # "respaldar" o "restaurar"
 
     txt_pass_respaldo = ft.TextField(
         label="Confirma tu contraseña",
         password=True,
         can_reveal_password=True,
-        border_color=ft.Colors.GREY_700,
-        color=ft.Colors.WHITE,
+        border_color=ft.Colors.OUTLINE,
+        color=ft.Colors.ON_SURFACE,
     )
-    lbl_titulo_respaldo = ft.Text("", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)
-    lbl_aviso_respaldo = ft.Text("", size=11, color=ft.Colors.GREY_400)
+    lbl_titulo_respaldo = ft.Text("", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE)
+    lbl_aviso_respaldo = ft.Text("", size=11, color=ft.Colors.ON_SURFACE_VARIANT)
     mensaje_respaldo = ft.Text("", size=12, text_align=ft.TextAlign.CENTER)
     cargando = ft.ProgressRing(width=18, height=18, stroke_width=2,
                                color=ft.Colors.ORANGE_800, visible=False)
@@ -96,10 +127,10 @@ def configuracion_view(page: ft.Page):
             ],
             spacing=10,
         ),
-        bgcolor=ft.Colors.BLACK,
+        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
         border_radius=14,
         padding=16,
-        border=ft.Border.all(1, ft.Colors.GREY_800),
+        border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
     )
 
     def resultado_respaldo(texto: str, ok: bool):
@@ -115,7 +146,7 @@ def configuracion_view(page: ft.Page):
                 lbl_titulo_respaldo.value = "Respaldar en la nube"
                 lbl_aviso_respaldo.value = ("Se subirán tus productos, ventas y lugares, "
                                             "cifrados con tu contraseña.")
-                lbl_aviso_respaldo.color = ft.Colors.GREY_400
+                lbl_aviso_respaldo.color = ft.Colors.ON_SURFACE_VARIANT
             else:
                 lbl_titulo_respaldo.value = "Restaurar respaldo"
                 lbl_aviso_respaldo.value = ("⚠ Se reemplazarán los productos y ventas de este "
@@ -165,7 +196,7 @@ def configuracion_view(page: ft.Page):
     txt_pass_respaldo.on_submit = ejecutar_respaldo
 
     def fila_opcion(texto, icono, color, handler, subtitulo=None):
-        textos = [ft.Text(texto, size=14, color=ft.Colors.WHITE)]
+        textos = [ft.Text(texto, size=14, color=ft.Colors.ON_SURFACE)]
         if subtitulo is not None:
             textos.append(subtitulo)
         return ft.Container(
@@ -178,12 +209,12 @@ def configuracion_view(page: ft.Page):
                         ],
                         spacing=12,
                     ),
-                    ft.Icon(ft.Icons.CHEVRON_RIGHT, color=ft.Colors.GREY_500, size=20),
+                    ft.Icon(ft.Icons.CHEVRON_RIGHT, color=ft.Colors.ON_SURFACE_VARIANT, size=20),
                 ],
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            bgcolor=ft.Colors.BLACK,
+            bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
             border_radius=14,
             padding=ft.Padding.symmetric(horizontal=16, vertical=14),
             on_click=handler,
@@ -206,12 +237,12 @@ def configuracion_view(page: ft.Page):
                     ],
                     spacing=12,
                 ),
-                ft.Icon(ft.Icons.CHEVRON_RIGHT, color=ft.Colors.GREY_500, size=20),
+                ft.Icon(ft.Icons.CHEVRON_RIGHT, color=ft.Colors.ON_SURFACE_VARIANT, size=20),
             ],
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         ),
-        bgcolor=ft.Colors.BLACK,
+        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
         border_radius=14,
         padding=ft.Padding.symmetric(horizontal=16, vertical=14),
         on_click=ir_a_eliminar,
@@ -224,27 +255,27 @@ def configuracion_view(page: ft.Page):
 
     txt_nombre = ft.TextField(
         label="Nombre", value=usuario.get("nombre", ""),
-        border_color=ft.Colors.GREY_700, color=ft.Colors.WHITE,
+        border_color=ft.Colors.OUTLINE, color=ft.Colors.ON_SURFACE,
         capitalization=ft.TextCapitalization.WORDS,
     )
     txt_apellido = ft.TextField(
         label="Apellido", value=usuario.get("apellido", ""),
-        border_color=ft.Colors.GREY_700, color=ft.Colors.WHITE,
+        border_color=ft.Colors.OUTLINE, color=ft.Colors.ON_SURFACE,
         capitalization=ft.TextCapitalization.WORDS,
     )
     txt_email = ft.TextField(
         label="Correo electrónico", value=usuario.get("email", ""),
-        border_color=ft.Colors.GREY_700, color=ft.Colors.WHITE,
+        border_color=ft.Colors.OUTLINE, color=ft.Colors.ON_SURFACE,
         keyboard_type=ft.KeyboardType.EMAIL,
     )
     txt_telefono = ft.TextField(
         label="Numero telefonico", value=usuario.get("telefono", ""),
-        border_color=ft.Colors.GREY_700, color=ft.Colors.WHITE,
+        border_color=ft.Colors.OUTLINE, color=ft.Colors.ON_SURFACE,
         keyboard_type=ft.KeyboardType.PHONE,
     )
     txt_empresa = ft.TextField(
         label="Nombre del emprendimiento", value=usuario.get("nombre_empresa", ""),
-        border_color=ft.Colors.GREY_700, color=ft.Colors.WHITE,
+        border_color=ft.Colors.OUTLINE, color=ft.Colors.ON_SURFACE,
         capitalization=ft.TextCapitalization.WORDS,
     )
 
@@ -288,16 +319,16 @@ def configuracion_view(page: ft.Page):
                 ft.Row(
                     controls=[
                         ft.Icon(ft.Icons.EDIT, color=ft.Colors.BLUE_400, size=22),
-                        ft.Text("Editar Datos", size=14, color=ft.Colors.WHITE),
+                        ft.Text("Editar Datos", size=14, color=ft.Colors.ON_SURFACE),
                     ],
                     spacing=12,
                 ),
-                ft.Icon(ft.Icons.CHEVRON_RIGHT, color=ft.Colors.GREY_500, size=20),
+                ft.Icon(ft.Icons.CHEVRON_RIGHT, color=ft.Colors.ON_SURFACE_VARIANT, size=20),
             ],
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         ),
-        bgcolor=ft.Colors.BLACK,
+        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
         border_radius=14,
         padding=ft.Padding.symmetric(horizontal=16, vertical=14),
         on_click=mostrar_editar,
@@ -307,8 +338,8 @@ def configuracion_view(page: ft.Page):
     panel_editar.controls = [
         ft.Row(
             controls=[
-                ft.IconButton(icon=ft.Icons.ARROW_BACK, icon_color=ft.Colors.WHITE, on_click=cancelar_editar),
-                ft.Text("Editar Datos", size=18, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                ft.IconButton(icon=ft.Icons.ARROW_BACK, icon_color=ft.Colors.ON_SURFACE, on_click=cancelar_editar),
+                ft.Text("Editar Datos", size=18, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
                 ft.Container(width=40),
             ],
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -325,7 +356,7 @@ def configuracion_view(page: ft.Page):
                 ],
                 spacing=12,
             ),
-            bgcolor=ft.Colors.BLACK,
+            bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
             border_radius=14,
             padding=18,
         ),
@@ -358,11 +389,11 @@ def configuracion_view(page: ft.Page):
         controls=[
             ft.IconButton(
                 icon=ft.Icons.ARROW_BACK,
-                icon_color=ft.Colors.WHITE,
+                icon_color=ft.Colors.ON_SURFACE,
                 on_click=volver,
             ),
             ft.Text("Configuración", size=18, weight=ft.FontWeight.BOLD,
-                    color=ft.Colors.WHITE, text_align=ft.TextAlign.CENTER),
+                    color=ft.Colors.ON_SURFACE, text_align=ft.TextAlign.CENTER),
             ft.Container(width=40),
         ],
         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -373,11 +404,13 @@ def configuracion_view(page: ft.Page):
     panel_principal.controls = [
         encabezado,
         ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
-        ft.Text("General", size=12, color=ft.Colors.GREY_400),
+        ft.Text("General", size=12, color=ft.Colors.ON_SURFACE_VARIANT),
         ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
         fila_notificaciones,
+        ft.Divider(height=8, color=ft.Colors.TRANSPARENT),
+        fila_modo_oscuro,
         ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
-        ft.Text("Respaldo en la nube", size=12, color=ft.Colors.GREY_400),
+        ft.Text("Respaldo en la nube", size=12, color=ft.Colors.ON_SURFACE_VARIANT),
         ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
         fila_respaldar,
         ft.Divider(height=8, color=ft.Colors.TRANSPARENT),
@@ -386,7 +419,7 @@ def configuracion_view(page: ft.Page):
         panel_respaldo,
         mensaje_respaldo,
         ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
-        ft.Text("Cuenta", size=12, color=ft.Colors.GREY_400),
+        ft.Text("Cuenta", size=12, color=ft.Colors.ON_SURFACE_VARIANT),
         ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
         fila_editar_datos,
         ft.Divider(height=8, color=ft.Colors.TRANSPARENT),
@@ -406,10 +439,10 @@ def configuracion_view(page: ft.Page):
         ),
         width=360,
         height=680,
-        bgcolor=ft.Colors.GREY_900,
+        bgcolor=ft.Colors.SURFACE,
         border_radius=40,
         padding=ft.Padding.only(left=22, right=22, top=22, bottom=6),
-        border=ft.Border.all(2, ft.Colors.GREY_800),
+        border=ft.Border.all(2, ft.Colors.OUTLINE_VARIANT),
     )
 
     return ft.Container(
