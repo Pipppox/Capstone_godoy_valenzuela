@@ -15,16 +15,16 @@ def eliminar_cuenta_view(page: ft.Page):
     txt_email = ft.TextField(
         label="Correo electrónico",
         value=usuario.get("email", ""),
-        border_color=ft.Colors.GREY_700,
-        color=ft.Colors.WHITE,
+        border_color=ft.Colors.OUTLINE,
+        color=ft.Colors.ON_SURFACE,
         keyboard_type=ft.KeyboardType.EMAIL,
     )
     txt_password = ft.TextField(
         label="Contraseña",
         password=True,
         can_reveal_password=True,
-        border_color=ft.Colors.GREY_700,
-        color=ft.Colors.WHITE,
+        border_color=ft.Colors.OUTLINE,
+        color=ft.Colors.ON_SURFACE,
     )
 
     mensaje = ft.Text("", size=13, color=ft.Colors.RED_400, text_align=ft.TextAlign.CENTER)
@@ -73,7 +73,7 @@ def eliminar_cuenta_view(page: ft.Page):
     # ---------- Formulario ----------
     panel_formulario.controls = [
         ft.Text("Confirma tu identidad para continuar.",
-                size=12, color=ft.Colors.GREY_400),
+                size=12, color=ft.Colors.ON_SURFACE_VARIANT),
         ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
         txt_email,
         ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
@@ -100,11 +100,11 @@ def eliminar_cuenta_view(page: ft.Page):
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                     ft.Text("¿Deseas eliminar tu cuenta?",
                             size=18, weight=ft.FontWeight.BOLD,
-                            color=ft.Colors.WHITE, text_align=ft.TextAlign.CENTER),
+                            color=ft.Colors.ON_SURFACE, text_align=ft.TextAlign.CENTER),
                     ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
                     ft.Text("Se eliminarán todos tus productos, ventas y datos de cuenta.\n"
                             "Esta acción es irreversible.",
-                            size=12, color=ft.Colors.GREY_400, text_align=ft.TextAlign.CENTER),
+                            size=12, color=ft.Colors.ON_SURFACE_VARIANT, text_align=ft.TextAlign.CENTER),
                     ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
                     ft.Button(
                         content=ft.Text("Sí, eliminar", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
@@ -127,7 +127,7 @@ def eliminar_cuenta_view(page: ft.Page):
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=0,
             ),
-            bgcolor=ft.Colors.BLACK,
+            bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
             border_radius=14,
             padding=30,
         ),
@@ -142,7 +142,7 @@ def eliminar_cuenta_view(page: ft.Page):
                     controls=[
                         ft.IconButton(
                             icon=ft.Icons.ARROW_BACK,
-                            icon_color=ft.Colors.WHITE,
+                            icon_color=ft.Colors.ON_SURFACE,
                             on_click=volver,
                         ),
                         ft.Text("Eliminar Cuenta", size=20,
@@ -157,14 +157,14 @@ def eliminar_cuenta_view(page: ft.Page):
                             ft.Icon(ft.Icons.WARNING_AMBER_ROUNDED, color=ft.Colors.AMBER_600, size=40),
                             ft.Text("Esta acción es irreversible.",
                                     size=14, weight=ft.FontWeight.BOLD,
-                                    color=ft.Colors.WHITE, text_align=ft.TextAlign.CENTER),
+                                    color=ft.Colors.ON_SURFACE, text_align=ft.TextAlign.CENTER),
                             ft.Text("Se eliminarán todos tus productos, ventas y datos de cuenta.",
-                                    size=12, color=ft.Colors.GREY_400, text_align=ft.TextAlign.CENTER),
+                                    size=12, color=ft.Colors.ON_SURFACE_VARIANT, text_align=ft.TextAlign.CENTER),
                         ],
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                         spacing=8,
                     ),
-                    bgcolor=ft.Colors.BLACK,
+                    bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
                     border_radius=14,
                     padding=18,
                 ),
@@ -178,10 +178,10 @@ def eliminar_cuenta_view(page: ft.Page):
         ),
         width=360,
         height=680,
-        bgcolor=ft.Colors.GREY_900,
+        bgcolor=ft.Colors.SURFACE,
         border_radius=40,
         padding=25,
-        border=ft.Border.all(2, ft.Colors.GREY_800),
+        border=ft.Border.all(2, ft.Colors.OUTLINE_VARIANT),
     )
 
     return ft.Container(

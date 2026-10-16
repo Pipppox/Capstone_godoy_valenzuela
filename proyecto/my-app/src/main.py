@@ -2,6 +2,7 @@ import flet as ft
 
 from database.db import init_db
 from services import sesion
+from components import tema
 from views.login_view import login_view
 from views.crear_cuenta_view import crear_cuenta_view
 from views.iniciar_sesion_email_view import iniciar_sesion_email_view
@@ -21,12 +22,14 @@ from views.maps_view import maps_view
 def main(page: ft.Page):
     init_db()
     page.title = "StockIN"
-    page.theme_mode = ft.ThemeMode.DARK
-    page.bgcolor = ft.Colors.BLACK
+    page.bgcolor = ft.Colors.SURFACE_CONTAINER_LOWEST
     page.padding = 0
 
     # Si el usuario no cerró sesión la última vez, entra directo
-    sesion_restaurada = sesion.restaurar()
+    sesion.restaurar()
+
+    # Modo oscuro / claro según el usuario (después de restaurar la sesión)
+    tema.configurar(page)
 
     # Rutas sin sesión (se apilan sobre el login)
     rutas_publicas = {
@@ -54,7 +57,7 @@ def main(page: ft.Page):
         return ft.View(
             route=route,
             controls=[builder(page)],
-            bgcolor=ft.Colors.BLACK,
+            bgcolor=ft.Colors.SURFACE_CONTAINER_LOWEST,
             padding=0,
         )
 
@@ -62,6 +65,9 @@ def main(page: ft.Page):
         page.views.clear()
         ruta = page.route
         print(f"[RUTA] {ruta} | sesión activa: {sesion.activa()}")
+
+        # Modo oscuro/claro del usuario conectado (oscuro si no hay sesión)
+        tema.aplicar(page)
 
         # Con sesión activa, las pantallas de login llevan directo al Home
         if ruta in rutas_publicas and sesion.activa():

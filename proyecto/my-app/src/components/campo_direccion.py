@@ -16,15 +16,15 @@ class CampoDireccion(ft.Column):
         self.campo = ft.TextField(
             label=label,
             hint_text="Buscar lugar...",
-            border_color=ft.Colors.GREY_700,
-            color=ft.Colors.WHITE,
+            border_color=ft.Colors.OUTLINE,
+            color=ft.Colors.ON_SURFACE,
             on_change=self._buscar,
         )
 
         self.lista = ft.Column(spacing=2)
         self.contenedor_sugerencias = ft.Container(
             content=self.lista,
-            bgcolor=ft.Colors.GREY_800,
+            bgcolor=ft.Colors.OUTLINE_VARIANT,
             border_radius=10,
             padding=4,
             visible=False,
@@ -60,7 +60,7 @@ class CampoDireccion(ft.Column):
                     controls=[
                         ft.Icon(ft.Icons.LOCATION_ON, color=ft.Colors.RED_400, size=16),
                         ft.Text(
-                            r["descripcion"], size=12, color=ft.Colors.WHITE,
+                            r["descripcion"], size=12, color=ft.Colors.ON_SURFACE,
                             expand=True, max_lines=2,
                         ),
                     ],

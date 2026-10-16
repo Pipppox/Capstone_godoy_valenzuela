@@ -10,8 +10,8 @@ def agregar_view(page: ft.Page):
     def campo(label, keyboard=None):
         return ft.TextField(
             label=label,
-            border_color=ft.Colors.GREY_700,
-            color=ft.Colors.WHITE,
+            border_color=ft.Colors.OUTLINE,
+            color=ft.Colors.ON_SURFACE,
             keyboard_type=keyboard,
         )
 
@@ -48,8 +48,8 @@ def agregar_view(page: ft.Page):
 
     encabezado = ft.Row(
         controls=[
-            ft.IconButton(icon=ft.Icons.ARROW_BACK, icon_color=ft.Colors.WHITE, on_click=volver),
-            ft.Text("Agregar Producto", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+            ft.IconButton(icon=ft.Icons.ARROW_BACK, icon_color=ft.Colors.ON_SURFACE, on_click=volver),
+            ft.Text("Agregar Producto", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
         ],
         alignment=ft.MainAxisAlignment.START,
         vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -60,7 +60,7 @@ def agregar_view(page: ft.Page):
             controls=[
                 ft.Row(
                     controls=[
-                        ft.Text("Agrega tu ", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                        ft.Text("Agrega tu ", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
                         ft.Text("Producto", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ORANGE_800),
                     ],
                     spacing=0,
@@ -74,7 +74,7 @@ def agregar_view(page: ft.Page):
             ],
             spacing=12,
         ),
-        bgcolor=ft.Colors.BLACK,
+        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
         border_radius=14,
         padding=18,
     )
@@ -110,10 +110,10 @@ def agregar_view(page: ft.Page):
         ),
         width=360,
         height=680,
-        bgcolor=ft.Colors.GREY_900,
+        bgcolor=ft.Colors.SURFACE,
         border_radius=40,
         padding=22,
-        border=ft.Border.all(2, ft.Colors.GREY_800),
+        border=ft.Border.all(2, ft.Colors.OUTLINE_VARIANT),
     )
 
     return ft.Container(

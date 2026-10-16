@@ -11,23 +11,23 @@ def restablecer_contra_view(page: ft.Page):
 
     txt_email = ft.TextField(
         label="Correo electrónico",
-        border_color=ft.Colors.GREY_700,
-        color=ft.Colors.WHITE,
+        border_color=ft.Colors.OUTLINE,
+        color=ft.Colors.ON_SURFACE,
         keyboard_type=ft.KeyboardType.EMAIL,
     )
     txt_telefono = ft.TextField(
         label="Numero telefonico",
         hint_text="912345678",
-        border_color=ft.Colors.GREY_700,
-        color=ft.Colors.WHITE,
+        border_color=ft.Colors.OUTLINE,
+        color=ft.Colors.ON_SURFACE,
         keyboard_type=ft.KeyboardType.PHONE,
     )
     txt_nueva_password = ft.TextField(
         label="Nueva contraseña",
         password=True,
         can_reveal_password=True,
-        border_color=ft.Colors.GREY_700,
-        color=ft.Colors.WHITE,
+        border_color=ft.Colors.OUTLINE,
+        color=ft.Colors.ON_SURFACE,
     )
 
     mensaje = ft.Text("", size=13, color=ft.Colors.RED_400, text_align=ft.TextAlign.CENTER)
@@ -61,17 +61,17 @@ def restablecer_contra_view(page: ft.Page):
                     controls=[
                         ft.IconButton(
                             icon=ft.Icons.ARROW_BACK,
-                            icon_color=ft.Colors.WHITE,
+                            icon_color=ft.Colors.ON_SURFACE,
                             on_click=volver,
                         ),
                         ft.Text("Restablecer Contraseña", size=20,
-                                weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                                weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
                     ],
                     alignment=ft.MainAxisAlignment.START,
                 ),
                 ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                 ft.Text("Ingresa tu correo y teléfono para verificar tu identidad.",
-                        size=12, color=ft.Colors.GREY_400),
+                        size=12, color=ft.Colors.ON_SURFACE_VARIANT),
                 ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
                 txt_email,
                 txt_telefono,
@@ -92,10 +92,10 @@ def restablecer_contra_view(page: ft.Page):
         ),
         width=360,
         height=680,
-        bgcolor=ft.Colors.GREY_900,
+        bgcolor=ft.Colors.SURFACE,
         border_radius=40,
         padding=25,
-        border=ft.Border.all(2, ft.Colors.GREY_800),
+        border=ft.Border.all(2, ft.Colors.OUTLINE_VARIANT),
     )
 
     return ft.Container(

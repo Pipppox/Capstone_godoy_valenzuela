@@ -3,7 +3,7 @@ import flet as ft
 from services import sesion
 from services import productos
 from components.mapa import crear_mapa
-
+from components.avatar import boton_perfil
 
 def index_view(page: ft.Page):
     usuario = sesion.usuario() or {}
@@ -45,14 +45,8 @@ def index_view(page: ft.Page):
     # ---------- Encabezado ----------
     encabezado = ft.Row(
         controls=[
-            ft.Text("Home", size=13, color=ft.Colors.GREY_400),
-            ft.IconButton(
-                icon=ft.Icons.ACCOUNT_CIRCLE,
-                icon_color=ft.Colors.GREY_500,
-                icon_size=34,
-                tooltip="Perfil",
-                on_click=ir_a_perfil,
-            ),
+            ft.Text("Home", size=13, color=ft.Colors.ON_SURFACE_VARIANT),
+            boton_perfil(page),
         ],
         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -60,8 +54,8 @@ def index_view(page: ft.Page):
 
     saludo = ft.Column(
         controls=[
-            ft.Text("Hola", size=30, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
-            ft.Text(f'{nombre}', size=30, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+            ft.Text("Hola", size=30, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
+            ft.Text(f'{nombre}', size=30, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
         ],
         spacing=0,
     )
@@ -95,14 +89,14 @@ def index_view(page: ft.Page):
                 vertical_alignment=ft.CrossAxisAlignment.END,
                 spacing=6,
             ),
-            bgcolor=ft.Colors.GREY_900,
+            bgcolor=ft.Colors.SURFACE,
             border=ft.Border.all(2, ft.Colors.ORANGE_800),
             border_radius=10,
             padding=14,
             margin=14,
         ),
         height=135,
-        bgcolor=ft.Colors.BLACK,
+        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
         border_radius=18,
         on_click=ir_a_dashboard,
         ink=True,
@@ -133,10 +127,10 @@ def index_view(page: ft.Page):
                         ft.Column(
                             controls=[
                                 ft.Text(texto_alerta, size=13,
-                                        weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                                        weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
                                 ft.Text(
                                     "Notificaciones activadas" if notif_activas else "Notificaciones desactivadas",
-                                    size=9, color=ft.Colors.GREY_500,
+                                    size=9, color=ft.Colors.ON_SURFACE_VARIANT,
                                 ),
                             ],
                             spacing=2,
@@ -144,11 +138,11 @@ def index_view(page: ft.Page):
                     ],
                     spacing=12,
                 ),
-                ft.Icon(ft.Icons.CHEVRON_RIGHT, color=ft.Colors.GREY_500, size=20),
+                ft.Icon(ft.Icons.CHEVRON_RIGHT, color=ft.Colors.ON_SURFACE_VARIANT, size=20),
             ],
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         ),
-        bgcolor=ft.Colors.BLACK,
+        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
         border_radius=14,
         padding=ft.Padding.symmetric(horizontal=14, vertical=14),
         on_click=ir_a_inventario,
@@ -159,16 +153,16 @@ def index_view(page: ft.Page):
     def linea_producto(nombre_producto: str, proporcion: float, color: str):
         return ft.Column(
             controls=[
-                ft.Text(nombre_producto, size=10, color=ft.Colors.WHITE),
+                ft.Text(nombre_producto, size=10, color=ft.Colors.ON_SURFACE),
                 ft.ProgressBar(value=proporcion, color=color,
-                               bgcolor=ft.Colors.GREY_800, height=5, border_radius=3),
+                               bgcolor=ft.Colors.OUTLINE_VARIANT, height=5, border_radius=3),
             ],
             spacing=3,
         )
 
     tarjeta_inventario = ft.Column(
         controls=[
-            ft.Text("Inventario", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+            ft.Text("Inventario", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
             ft.Container(
                 content=ft.Column(
                     controls=[
@@ -178,7 +172,7 @@ def index_view(page: ft.Page):
                     ],
                     spacing=10,
                 ),
-                bgcolor=ft.Colors.BLACK,
+                bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
                 border_radius=14,
                 padding=14,
                 height=110,
@@ -198,7 +192,7 @@ def index_view(page: ft.Page):
 
     tarjeta_maps = ft.Column(
         controls=[
-            ft.Text("Maps", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+            ft.Text("Maps", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
             ft.Container(
                 content=ft.Stack(
                     controls=[
@@ -225,7 +219,7 @@ def index_view(page: ft.Page):
     barra_inferior = ft.Container(
         content=ft.Row(
             controls=[
-                ft.IconButton(icon=ft.Icons.HOME, icon_color=ft.Colors.WHITE,
+                ft.IconButton(icon=ft.Icons.HOME, icon_color=ft.Colors.ON_SURFACE,
                               icon_size=22, tooltip="Home"),
                 ft.Container(
                     content=ft.Icon(ft.Icons.ADD, color=ft.Colors.WHITE, size=24),
@@ -238,7 +232,7 @@ def index_view(page: ft.Page):
                     on_click=ir_a_agregar,
                     ink=True,
                 ),
-                ft.IconButton(icon=ft.Icons.DELETE_OUTLINE, icon_color=ft.Colors.GREY_500,
+                ft.IconButton(icon=ft.Icons.DELETE_OUTLINE, icon_color=ft.Colors.ON_SURFACE_VARIANT,
                               icon_size=22, tooltip="Vender producto",
                               on_click=ir_a_vender),
             ],
@@ -267,7 +261,7 @@ def index_view(page: ft.Page):
                         vertical_alignment=ft.CrossAxisAlignment.START,
                     ),
                     ft.TextButton(
-                        content=ft.Text("Cerrar sesión", size=12, color=ft.Colors.GREY_500),
+                        content=ft.Text("Cerrar sesión", size=12, color=ft.Colors.ON_SURFACE_VARIANT),
                         on_click=mostrar_confirmar_logout,
                     ),
                 ],
@@ -294,10 +288,10 @@ def index_view(page: ft.Page):
                         ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                         ft.Text("¿Deseas cerrar sesión?",
                                 size=18, weight=ft.FontWeight.BOLD,
-                                color=ft.Colors.WHITE, text_align=ft.TextAlign.CENTER),
+                                color=ft.Colors.ON_SURFACE, text_align=ft.TextAlign.CENTER),
                         ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
                         ft.Text("Tendrás que volver a iniciar sesión\npara acceder a tu cuenta.",
-                                size=12, color=ft.Colors.GREY_400, text_align=ft.TextAlign.CENTER),
+                                size=12, color=ft.Colors.ON_SURFACE_VARIANT, text_align=ft.TextAlign.CENTER),
                         ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
                         ft.Button(
                             content=ft.Text("Sí, cerrar sesión", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
@@ -320,7 +314,7 @@ def index_view(page: ft.Page):
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     spacing=0,
                 ),
-                bgcolor=ft.Colors.BLACK,
+                bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
                 border_radius=14,
                 padding=30,
             ),
@@ -338,10 +332,10 @@ def index_view(page: ft.Page):
         ),
         width=360,
         height=680,
-        bgcolor=ft.Colors.GREY_900,
+        bgcolor=ft.Colors.SURFACE,
         border_radius=40,
         padding=ft.Padding.only(left=22, right=22, top=22, bottom=6),
-        border=ft.Border.all(2, ft.Colors.GREY_800),
+        border=ft.Border.all(2, ft.Colors.OUTLINE_VARIANT),
     )
 
     return ft.Container(

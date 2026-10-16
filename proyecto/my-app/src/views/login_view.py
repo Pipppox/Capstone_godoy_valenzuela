@@ -26,7 +26,7 @@ def login_view(page: ft.Page):
     # Título
     titulo_brand = ft.Row(
         controls=[
-            ft.Text("Stock", size=35, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+            ft.Text("Stock", size=35, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
             ft.Text("IN", size=35, weight=ft.FontWeight.BOLD, color=ft.Colors.ORANGE_800),
         ],
         alignment=ft.MainAxisAlignment.START,
@@ -36,11 +36,11 @@ def login_view(page: ft.Page):
     # Slogan
     slogan = ft.Column(
         controls=[
-            ft.Text("'Nunca te quedes", size=34, weight=ft.FontWeight.W_600, color=ft.Colors.WHITE),
+            ft.Text("'Nunca te quedes", size=34, weight=ft.FontWeight.W_600, color=ft.Colors.ON_SURFACE),
             ft.Row(
                 controls=[
                     ft.Text("OUT ", size=34, weight=ft.FontWeight.BOLD, color=ft.Colors.ORANGE_800),
-                    ft.Text("de Stock\"", size=34, weight=ft.FontWeight.W_600, color=ft.Colors.WHITE),
+                    ft.Text("de Stock\"", size=34, weight=ft.FontWeight.W_600, color=ft.Colors.ON_SURFACE),
                 ],
                 alignment=ft.MainAxisAlignment.START,
                 spacing=0,
@@ -74,7 +74,7 @@ def login_view(page: ft.Page):
     )
 
     btn_crear_cuenta = ft.Button(
-        content=ft.Text("Crea tu Cuenta", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+        content=ft.Text("Crea tu Cuenta", weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
         bgcolor=ft.Colors.GREY_500,
         width=280,
         height=48,
@@ -103,10 +103,10 @@ def login_view(page: ft.Page):
         ),
         width=360,
         height=680,
-        bgcolor=ft.Colors.GREY_900,
+        bgcolor=ft.Colors.SURFACE,
         border_radius=40,
         padding=25,
-        border=ft.Border.all(2, ft.Colors.GREY_800),
+        border=ft.Border.all(2, ft.Colors.OUTLINE_VARIANT),
     )
 
     return ft.Container(

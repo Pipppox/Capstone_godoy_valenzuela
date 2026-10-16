@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import flet as ft
-
+from components.avatar import boton_perfil
 from services import productos, inventario_io
 
 
@@ -61,7 +61,7 @@ def inventario_view(page: ft.Page):
         else:
             contenedor_productos.controls.append(
                 ft.Text("Aún no tienes productos. Agrega el primero.",
-                        size=12, color=ft.Colors.GREY_500),
+                        size=12, color=ft.Colors.ON_SURFACE_VARIANT),
             )
         page.update()
 
@@ -76,10 +76,10 @@ def inventario_view(page: ft.Page):
             panel_confirmar.content = ft.Column(
                 controls=[
                     ft.Text(f'¿Eliminar "{producto["nombre"]}"?',
-                            size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE,
+                            size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE,
                             text_align=ft.TextAlign.CENTER),
                     ft.Text("Sus ventas se conservan en el historial.",
-                            size=11, color=ft.Colors.GREY_400, text_align=ft.TextAlign.CENTER),
+                            size=11, color=ft.Colors.ON_SURFACE_VARIANT, text_align=ft.TextAlign.CENTER),
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                     ft.Row(
                         controls=[
@@ -125,11 +125,11 @@ def inventario_view(page: ft.Page):
     panel_editar = ft.Container(visible=False)
     producto_editando = {"id": None}
 
-    txt_edit_codigo = ft.TextField(label="Código", border_color=ft.Colors.GREY_700, color=ft.Colors.WHITE)
-    txt_edit_nombre = ft.TextField(label="Nombre / Descripción", border_color=ft.Colors.GREY_700, color=ft.Colors.WHITE)
-    txt_edit_categoria = ft.TextField(label="Categoría", border_color=ft.Colors.GREY_700, color=ft.Colors.WHITE)
-    txt_edit_precio = ft.TextField(label="Precio ($)", border_color=ft.Colors.GREY_700, color=ft.Colors.WHITE, keyboard_type=ft.KeyboardType.NUMBER)
-    txt_edit_stock = ft.TextField(label="Stock", border_color=ft.Colors.GREY_700, color=ft.Colors.WHITE, keyboard_type=ft.KeyboardType.NUMBER)
+    txt_edit_codigo = ft.TextField(label="Código", border_color=ft.Colors.OUTLINE, color=ft.Colors.ON_SURFACE)
+    txt_edit_nombre = ft.TextField(label="Nombre / Descripción", border_color=ft.Colors.OUTLINE, color=ft.Colors.ON_SURFACE)
+    txt_edit_categoria = ft.TextField(label="Categoría", border_color=ft.Colors.OUTLINE, color=ft.Colors.ON_SURFACE)
+    txt_edit_precio = ft.TextField(label="Precio ($)", border_color=ft.Colors.OUTLINE, color=ft.Colors.ON_SURFACE, keyboard_type=ft.KeyboardType.NUMBER)
+    txt_edit_stock = ft.TextField(label="Stock", border_color=ft.Colors.OUTLINE, color=ft.Colors.ON_SURFACE, keyboard_type=ft.KeyboardType.NUMBER)
     mensaje_editar = ft.Text("", size=12, color=ft.Colors.RED_400, text_align=ft.TextAlign.CENTER)
 
     def abrir_editar(producto):
@@ -176,8 +176,8 @@ def inventario_view(page: ft.Page):
         controls=[
             ft.Row(
                 controls=[
-                    ft.IconButton(icon=ft.Icons.ARROW_BACK, icon_color=ft.Colors.WHITE, on_click=cancelar_edicion),
-                    ft.Text("Editar Producto", size=18, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                    ft.IconButton(icon=ft.Icons.ARROW_BACK, icon_color=ft.Colors.ON_SURFACE, on_click=cancelar_edicion),
+                    ft.Text("Editar Producto", size=18, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
                 ],
                 alignment=ft.MainAxisAlignment.START,
             ),
@@ -276,7 +276,7 @@ def inventario_view(page: ft.Page):
     panel_exportar.content = ft.Container(
         content=ft.Column(
             controls=[
-                ft.Text("¿En qué formato?", size=13, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                ft.Text("¿En qué formato?", size=13, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
                 ft.Row(
                     controls=[
                         boton_formato("Excel", ft.Icons.TABLE_CHART, ft.Colors.GREEN_700, exportar("xlsx")),
@@ -289,10 +289,10 @@ def inventario_view(page: ft.Page):
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=10,
         ),
-        bgcolor=ft.Colors.BLACK,
+        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
         border_radius=14,
         padding=14,
-        border=ft.Border.all(1, ft.Colors.GREY_800),
+        border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
     )
 
     # ---------- Importar ----------
@@ -376,7 +376,7 @@ def inventario_view(page: ft.Page):
         for item in items[:maximo]:
             controles.append(ft.Text(f"• {item}", size=11, color=ft.Colors.GREY_300))
         if len(items) > maximo:
-            controles.append(ft.Text(f"(+{len(items) - maximo} más)", size=11, color=ft.Colors.GREY_500))
+            controles.append(ft.Text(f"(+{len(items) - maximo} más)", size=11, color=ft.Colors.ON_SURFACE_VARIANT))
         return controles
 
     def mostrar_resumen_importacion(analisis: dict):
@@ -388,7 +388,7 @@ def inventario_view(page: ft.Page):
         hay_algo = n_nuevos + n_actualizar > 0
 
         contenido = [
-            ft.Text("Revisar importación", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+            ft.Text("Revisar importación", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
             ft.Text(f"✓ {n_nuevos} productos nuevos", size=12, color=ft.Colors.GREEN_400),
             ft.Text(f"↻ {n_actualizar} se actualizarán (mismo código y nombre)",
                     size=12, color=ft.Colors.BLUE_300),
@@ -403,7 +403,7 @@ def inventario_view(page: ft.Page):
         )
         if not hay_algo:
             contenido.append(ft.Text("No hay productos válidos para importar.",
-                                     size=12, color=ft.Colors.GREY_400))
+                                     size=12, color=ft.Colors.ON_SURFACE_VARIANT))
 
         if hay_algo:
             botones = [
@@ -445,10 +445,10 @@ def inventario_view(page: ft.Page):
         hay_problemas = analisis["conflictos"] or analisis["errores"]
         panel_importar.content = ft.Container(
             content=ft.Column(controls=contenido, spacing=6),
-            bgcolor=ft.Colors.BLACK,
+            bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
             border_radius=14,
             padding=14,
-            border=ft.Border.all(1, ft.Colors.AMBER_600 if hay_problemas else ft.Colors.GREY_800),
+            border=ft.Border.all(1, ft.Colors.AMBER_600 if hay_problemas else ft.Colors.OUTLINE_VARIANT),
         )
         panel_importar.visible = True
         mensaje_importar.value = ""
@@ -491,20 +491,20 @@ def inventario_view(page: ft.Page):
                 controls=[
                     ft.Column(
                         controls=[
-                            ft.Text(producto["nombre"], size=13, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
-                            ft.Text(f'{producto["codigo"]} · {producto["categoria"]}', size=10, color=ft.Colors.GREY_400),
+                            ft.Text(producto["nombre"], size=13, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
+                            ft.Text(f'{producto["codigo"]} · {producto["categoria"]}', size=10, color=ft.Colors.ON_SURFACE_VARIANT),
                             ft.Row(
                                 controls=[
                                     ft.ProgressBar(
                                         value=productos.proporcion(producto, maximo),
                                         color=productos.color_stock(producto["stock"]),
-                                        bgcolor=ft.Colors.GREY_800,
+                                        bgcolor=ft.Colors.OUTLINE_VARIANT,
                                         height=5,
                                         border_radius=3,
                                         width=120,
                                     ),
                                     ft.Text(f'{producto["stock"]}u · ${producto["precio"]:,}'.replace(",", "."),
-                                            size=10, color=ft.Colors.GREY_400),
+                                            size=10, color=ft.Colors.ON_SURFACE_VARIANT),
                                 ],
                                 spacing=8,
                                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -522,7 +522,7 @@ def inventario_view(page: ft.Page):
                 ],
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            bgcolor=ft.Colors.BLACK,
+            bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
             border_radius=12,
             padding=ft.Padding.symmetric(horizontal=14, vertical=10),
         )
@@ -530,10 +530,9 @@ def inventario_view(page: ft.Page):
     # ---------- Encabezado ----------
     encabezado = ft.Row(
         controls=[
-            ft.IconButton(icon=ft.Icons.ARROW_BACK, icon_color=ft.Colors.WHITE, on_click=volver),
-            ft.Text("Inventario", size=22, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
-            ft.IconButton(icon=ft.Icons.ACCOUNT_CIRCLE, icon_color=ft.Colors.GREY_500,
-                          icon_size=30, tooltip="Perfil", on_click=ir_a_perfil),
+            ft.IconButton(icon=ft.Icons.ARROW_BACK, icon_color=ft.Colors.ON_SURFACE, on_click=volver),
+            ft.Text("Inventario", size=22, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
+            boton_perfil(page),
         ],
         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -545,12 +544,12 @@ def inventario_view(page: ft.Page):
             content=ft.Row(
                 controls=[
                     ft.Row(controls=[ft.Icon(icono, color=color, size=20),
-                                     ft.Text(texto, size=13, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)], spacing=12),
-                    ft.Icon(ft.Icons.CHEVRON_RIGHT, color=ft.Colors.GREY_500, size=20),
+                                     ft.Text(texto, size=13, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE)], spacing=12),
+                    ft.Icon(ft.Icons.CHEVRON_RIGHT, color=ft.Colors.ON_SURFACE_VARIANT, size=20),
                 ],
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             ),
-            bgcolor=ft.Colors.BLACK, border_radius=14,
+            bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST, border_radius=14,
             padding=ft.Padding.symmetric(horizontal=16, vertical=14),
             on_click=handler, ink=True,
         )
@@ -559,11 +558,11 @@ def inventario_view(page: ft.Page):
     barra_inferior = ft.Container(
         content=ft.Row(
             controls=[
-                ft.IconButton(icon=ft.Icons.HOME, icon_color=ft.Colors.GREY_500, icon_size=22, on_click=volver),
+                ft.IconButton(icon=ft.Icons.HOME, icon_color=ft.Colors.ON_SURFACE_VARIANT, icon_size=22, on_click=volver),
                 ft.Container(content=ft.Icon(ft.Icons.ADD, color=ft.Colors.WHITE, size=24),
                              width=48, height=48, bgcolor=ft.Colors.BLUE_600, border_radius=24,
                              alignment=ft.Alignment.CENTER, on_click=ir_a_agregar, ink=True),
-                ft.IconButton(icon=ft.Icons.DELETE_OUTLINE, icon_color=ft.Colors.GREY_500,
+                ft.IconButton(icon=ft.Icons.DELETE_OUTLINE, icon_color=ft.Colors.ON_SURFACE_VARIANT,
                               icon_size=22, on_click=ir_a_vender),
             ],
             alignment=ft.MainAxisAlignment.SPACE_AROUND,
@@ -580,7 +579,7 @@ def inventario_view(page: ft.Page):
         controls=[
             encabezado,
             ft.Divider(height=8, color=ft.Colors.TRANSPARENT),
-            ft.Text("Inventario total", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+            ft.Text("Inventario total", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
             mensaje,
             panel_confirmar,
             contenedor_productos,
@@ -612,10 +611,10 @@ def inventario_view(page: ft.Page):
         ),
         width=360,
         height=680,
-        bgcolor=ft.Colors.GREY_900,
+        bgcolor=ft.Colors.SURFACE,
         border_radius=40,
         padding=ft.Padding.only(left=22, right=22, top=22, bottom=6),
-        border=ft.Border.all(2, ft.Colors.GREY_800),
+        border=ft.Border.all(2, ft.Colors.OUTLINE_VARIANT),
     )
 
     return ft.Container(

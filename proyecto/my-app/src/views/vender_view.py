@@ -13,8 +13,8 @@ def vender_view(page: ft.Page):
 
     dd_producto = ft.Dropdown(
         label="Producto a vender",
-        border_color=ft.Colors.GREY_700,
-        color=ft.Colors.WHITE,
+        border_color=ft.Colors.OUTLINE,
+        color=ft.Colors.ON_SURFACE,
         options=[
             ft.dropdown.Option(
                 key=str(p["id"]),
@@ -28,8 +28,8 @@ def vender_view(page: ft.Page):
         label="Cantidad",
         value="1",
         keyboard_type=ft.KeyboardType.NUMBER,
-        border_color=ft.Colors.GREY_700,
-        color=ft.Colors.WHITE,
+        border_color=ft.Colors.OUTLINE,
+        color=ft.Colors.ON_SURFACE,
     )
 
     # ---------- Lugar de venta (autocompletado + mapa) ----------
@@ -39,7 +39,7 @@ def vender_view(page: ft.Page):
 
     alerta_stock = ft.Container(
         visible=False,
-        bgcolor=ft.Colors.BLACK,
+        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
         border_radius=12,
         padding=ft.Padding.symmetric(horizontal=14, vertical=10),
     )
@@ -112,7 +112,7 @@ def vender_view(page: ft.Page):
                             ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
                             ft.Text(
                                 f'"{resumen["nombre"]}" tiene solo {resumen["stock_nuevo"]} unidades.',
-                                size=13, color=ft.Colors.WHITE, text_align=ft.TextAlign.CENTER,
+                                size=13, color=ft.Colors.ON_SURFACE, text_align=ft.TextAlign.CENTER,
                             ),
                             ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
                             ft.Button(
@@ -127,7 +127,7 @@ def vender_view(page: ft.Page):
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                         spacing=0,
                     ),
-                    bgcolor=ft.Colors.BLACK,
+                    bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
                     border_radius=14,
                     padding=30,
                     border=ft.Border.all(2, ft.Colors.AMBER_600),
@@ -140,8 +140,8 @@ def vender_view(page: ft.Page):
 
     encabezado = ft.Row(
         controls=[
-            ft.IconButton(icon=ft.Icons.ARROW_BACK, icon_color=ft.Colors.WHITE, on_click=volver),
-            ft.Text("Vender Producto", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+            ft.IconButton(icon=ft.Icons.ARROW_BACK, icon_color=ft.Colors.ON_SURFACE, on_click=volver),
+            ft.Text("Vender Producto", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
         ],
         alignment=ft.MainAxisAlignment.START,
         vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -153,7 +153,7 @@ def vender_view(page: ft.Page):
                 ft.Row(
                     controls=[
                         ft.Text("Producto ", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ORANGE_800),
-                        ft.Text("a vender", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                        ft.Text("a vender", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
                     ],
                     spacing=0,
                 ),
@@ -167,14 +167,14 @@ def vender_view(page: ft.Page):
     else:
         cuerpo = ft.Column(
             controls=[
-                ft.Text("No tienes productos para vender.", size=13, color=ft.Colors.GREY_400),
+                ft.Text("No tienes productos para vender.", size=13, color=ft.Colors.ON_SURFACE_VARIANT),
             ],
             spacing=6,
         )
 
     formulario = ft.Container(
         content=cuerpo,
-        bgcolor=ft.Colors.BLACK,
+        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
         border_radius=14,
         padding=18,
     )
@@ -221,10 +221,10 @@ def vender_view(page: ft.Page):
         ),
         width=360,
         height=680,
-        bgcolor=ft.Colors.GREY_900,
+        bgcolor=ft.Colors.SURFACE,
         border_radius=40,
         padding=22,
-        border=ft.Border.all(2, ft.Colors.GREY_800),
+        border=ft.Border.all(2, ft.Colors.OUTLINE_VARIANT),
     )
 
     return ft.Container(
