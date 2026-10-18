@@ -3,6 +3,7 @@ import asyncio
 import flet as ft
 
 from services.auth import registrar_usuario
+from components.terminos import panel_terminos
 
 
 def crear_cuenta_view(page: ft.Page):
@@ -54,7 +55,8 @@ def crear_cuenta_view(page: ft.Page):
 
     mensaje = ft.Text("", size=13, color=ft.Colors.RED_400, text_align=ft.TextAlign.CENTER)
 
-    async def registrar(e):
+    # ---------- Creación de la cuenta (solo se ejecuta si acepta los términos) ----------
+    async def crear_cuenta_confirmada(e):
         mensaje.color = ft.Colors.RED_400
         try:
             registrar_usuario(
@@ -78,16 +80,29 @@ def crear_cuenta_view(page: ft.Page):
         await asyncio.sleep(1.5)
         await page.push_route("/iniciar_sesion_email")
 
+    # ---------- Términos y condiciones ----------
+    async def al_rechazar(e):
+        await page.push_route("/")
+
+    panel_legal = panel_terminos(page, crear_cuenta_confirmada, al_rechazar)
+
+    async def pedir_aceptacion(e):
+        panel_legal.visible = True
+        page.update()
+
     btn_registrar = ft.Button(
         content=ft.Text("Registrarse", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
         bgcolor=ft.Colors.ORANGE_800,
         width=280,
         height=48,
         style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=25)),
-        on_click=registrar,
+        on_click=pedir_aceptacion,
     )
 
-    contenido = ft.Container(
+    # ---------- Tarjeta con el formulario ----------
+    formulario = ft.Container(
+        expand=True,
+        padding=25,
         content=ft.Column(
             controls=[
                 ft.Row(
@@ -97,7 +112,8 @@ def crear_cuenta_view(page: ft.Page):
                             icon_color=ft.Colors.ON_SURFACE,
                             on_click=volver_login,
                         ),
-                        ft.Text("Crear Cuenta", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
+                        ft.Text("Crear Cuenta", size=24, weight=ft.FontWeight.BOLD,
+                                color=ft.Colors.ON_SURFACE),
                     ],
                     alignment=ft.MainAxisAlignment.START,
                 ),
@@ -118,17 +134,28 @@ def crear_cuenta_view(page: ft.Page):
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=15,
             scroll=ft.ScrollMode.AUTO,
+            expand=True,
+        ),
+    )
+
+    # El panel de términos va encima del formulario (Stack)
+    tarjeta = ft.Container(
+        content=ft.Stack(
+            controls=[
+                formulario,
+                panel_legal,
+            ],
         ),
         width=360,
         height=680,
         bgcolor=ft.Colors.SURFACE,
         border_radius=40,
-        padding=25,
         border=ft.Border.all(2, ft.Colors.OUTLINE_VARIANT),
+        clip_behavior=ft.ClipBehavior.HARD_EDGE,
     )
 
     return ft.Container(
-        content=contenido,
+        content=tarjeta,
         alignment=ft.Alignment.CENTER,
         expand=True,
     )
