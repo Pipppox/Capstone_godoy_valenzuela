@@ -29,3 +29,5 @@ storage/
 
 # Backup
 respaldo_vistas_*/
+
+src/services/claves_locales.py

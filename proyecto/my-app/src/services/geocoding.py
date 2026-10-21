@@ -10,9 +10,18 @@ from dotenv import load_dotenv
 
 from database.db import conexion
 
-load_dotenv()
+try:
+    load_dotenv()
+except AssertionError:
+    # En el celular no hay archivo .env junto al código; la app sigue sin claves
+    pass
 
-API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "")
+try:
+    from services.claves_locales import GOOGLE_MAPS_API_KEY as _CLAVE_LOCAL
+except ImportError:
+    _CLAVE_LOCAL = ""
+
+API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "") or _CLAVE_LOCAL
 BASE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
 
 
