@@ -13,6 +13,7 @@ dependencies = [
     "python-dotenv",
     "requests",
     "openpyxl",
+    "cryptography",
 ]
 
 [dependency-groups]

@@ -20,10 +20,19 @@ from database.db import conexion
 from services import sesion
 from services.auth import _hashear
 
-load_dotenv()
+try:
+    load_dotenv()
+except AssertionError:
+    # En el celular no hay archivo .env junto al código; la app sigue sin claves
+    pass
 
-SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
+try:
+    from services.claves_locales import SUPABASE_URL as _URL_LOCAL, SUPABASE_KEY as _KEY_LOCAL
+except ImportError:
+    _URL_LOCAL, _KEY_LOCAL = "", ""
+
+SUPABASE_URL = (os.getenv("SUPABASE_URL", "") or _URL_LOCAL).rstrip("/")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "") or _KEY_LOCAL
 VERSION = 1
 
 CAMPOS_PERFIL = ("nombre", "apellido", "nombre_empresa", "notificaciones", "foto_perfil")
