@@ -8,7 +8,10 @@ class CampoDireccion(ft.Column):
     """Campo de texto con autocompletado de Google Places + mapa dinámico."""
 
     def __init__(self, label="Lugar de venta", mostrar_mapa=True, alto_mapa=180):
-        super().__init__(spacing=8)
+        super().__init__(
+            spacing=8,
+            horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
+        )
         self.token = geocoding.nuevo_token()
         self.lugar = None  # dict {"lugar", "lat", "lng"} cuando se elige una sugerencia
         self.alto_mapa = alto_mapa

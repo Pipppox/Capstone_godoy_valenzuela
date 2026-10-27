@@ -251,7 +251,11 @@ def configuracion_view(page: ft.Page):
 
     # ---------- Editar datos ----------
     panel_principal = ft.Column(spacing=0)
-    panel_editar = ft.Column(visible=False, spacing=0)
+    panel_editar = ft.Column(
+        visible=False,
+        spacing=0,
+        horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
+    )
 
     txt_nombre = ft.TextField(
         label="Nombre", value=usuario.get("nombre", ""),
@@ -347,7 +351,7 @@ def configuracion_view(page: ft.Page):
         ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
         ft.Container(
             content=ft.Column(
-                controls=[
+            controls=[
                     txt_nombre,
                     txt_apellido,
                     txt_email,
@@ -355,6 +359,7 @@ def configuracion_view(page: ft.Page):
                     txt_empresa,
                 ],
                 spacing=12,
+                horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
             ),
             bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
             border_radius=14,
@@ -433,7 +438,7 @@ def configuracion_view(page: ft.Page):
                 panel_principal,
                 panel_editar,
             ],
-            horizontal_alignment=ft.CrossAxisAlignment.START,
+            horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
             spacing=0,
             scroll=ft.ScrollMode.AUTO,
         ),

@@ -57,12 +57,14 @@ def agregar_view(page: ft.Page):
 
     formulario = ft.Container(
         content=ft.Column(
+            horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
             controls=[
-                ft.Row(
+                        ft.Row(
                     controls=[
-                        ft.Text("Agrega tu ", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
-                        ft.Text("Producto", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ORANGE_800),
+                        ft.Text("Agrega tu ", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
+                        ft.Text("Producto", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.ORANGE_800),
                     ],
+                    alignment=ft.MainAxisAlignment.CENTER,
                     spacing=0,
                 ),
                 ft.Divider(height=4, color=ft.Colors.TRANSPARENT),
