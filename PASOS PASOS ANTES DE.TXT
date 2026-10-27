@@ -50,3 +50,8 @@ COMANDO PARA PODER EJECUTAR EL PROYECTO EN TIEMPO REAL DEL NAVEGADOR
 flet run src/main.py
 para ejecutar normal 
 -----------------------
+
+
+flet build apk -v
+
+
