@@ -5,8 +5,10 @@ def login_view(page: ft.Page):
     # Navegación
     async def ir_a_crear_cuenta(e):
         await page.push_route("/crear_cuenta")
+
     async def ir_a_iniciar_sesion_email(e):
         await page.push_route("/iniciar_sesion_email")
+
     async def ir_a_iniciar_sesion_celu(e):
         await page.push_route("/iniciar_sesion_celu")
 
@@ -14,12 +16,9 @@ def login_view(page: ft.Page):
     ilustracion = ft.Container(
         content=ft.Image(
             src="logo sin fondo.png",
-            width=260,
-            height=220,
+            height=200,
             fit=ft.BoxFit.CONTAIN,
         ),
-        width=280,
-        height=220,
         alignment=ft.Alignment.CENTER,
     )
 
@@ -36,11 +35,11 @@ def login_view(page: ft.Page):
     # Slogan
     slogan = ft.Column(
         controls=[
-            ft.Text("'Nunca te quedes", size=34, weight=ft.FontWeight.W_600, color=ft.Colors.ON_SURFACE),
+            ft.Text("'Nunca te quedes", size=32, weight=ft.FontWeight.W_600, color=ft.Colors.ON_SURFACE),
             ft.Row(
                 controls=[
-                    ft.Text("OUT ", size=34, weight=ft.FontWeight.BOLD, color=ft.Colors.ORANGE_800),
-                    ft.Text("de Stock\"", size=34, weight=ft.FontWeight.W_600, color=ft.Colors.ON_SURFACE),
+                    ft.Text("OUT ", size=32, weight=ft.FontWeight.BOLD, color=ft.Colors.ORANGE_800),
+                    ft.Text("de Stock\"", size=32, weight=ft.FontWeight.W_600, color=ft.Colors.ON_SURFACE),
                 ],
                 alignment=ft.MainAxisAlignment.START,
                 spacing=0,
@@ -50,59 +49,40 @@ def login_view(page: ft.Page):
         spacing=0,
     )
 
-    # Botones
-    btn_email = ft.Button(
-        content=ft.Text("Iniciar Sesión con Email", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
-        bgcolor=ft.Colors.ORANGE_800,
-        width=280,
-        height=48,
-        style=ft.ButtonStyle(
-            shape=ft.RoundedRectangleBorder(radius=25),
-        ),
-        on_click=ir_a_iniciar_sesion_email,
+    # Botones (llenan el ancho de la tarjeta)
+    def boton(texto, color_fondo, color_texto, accion):
+        return ft.Button(
+            content=ft.Text(texto, weight=ft.FontWeight.BOLD, color=color_texto),
+            bgcolor=color_fondo,
+            height=48,
+            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=25)),
+            on_click=accion,
+        )
+
+    btn_email = boton("Iniciar Sesión con Email", ft.Colors.ORANGE_800, ft.Colors.WHITE, ir_a_iniciar_sesion_email)
+    btn_telefono = boton("Iniciar Sesión con Teléfono", ft.Colors.GREY_700, ft.Colors.WHITE, ir_a_iniciar_sesion_celu)
+    btn_crear_cuenta = boton("Crea tu Cuenta", ft.Colors.GREY_500, ft.Colors.ON_SURFACE, ir_a_crear_cuenta)
+
+    # Contenido: logo arriba, texto al centro, botones abajo
+    contenido = ft.Column(
+        controls=[
+            ilustracion,
+            ft.Column(controls=[titulo_brand, slogan], spacing=8),
+            ft.Column(
+                controls=[btn_email, btn_telefono, btn_crear_cuenta],
+                spacing=12,
+                horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
+            ),
+        ],
+        expand=True,
+        alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+        horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
     )
 
-    btn_telefono = ft.Button(
-        content=ft.Text("Iniciar Sesión con Teléfono", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
-        bgcolor=ft.Colors.GREY_700,
-        width=280,
-        height=48,
-        style=ft.ButtonStyle(
-            shape=ft.RoundedRectangleBorder(radius=25),
-        ),
-        on_click=ir_a_iniciar_sesion_celu,
-    )
-
-    btn_crear_cuenta = ft.Button(
-        content=ft.Text("Crea tu Cuenta", weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
-        bgcolor=ft.Colors.GREY_500,
-        width=280,
-        height=48,
-        style=ft.ButtonStyle(
-            shape=ft.RoundedRectangleBorder(radius=25),
-        ),
-        on_click=ir_a_crear_cuenta,
-    )
-
-    # Tarjeta Celular
+    # Tarjeta: ocupa todo el espacio disponible, igual que las demás vistas
     tarjeta_movil = ft.Container(
-        content=ft.Column(
-            controls=[
-                ilustracion,
-                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
-                titulo_brand,
-                slogan,
-                ft.Divider(height=15, color=ft.Colors.TRANSPARENT),
-                btn_email,
-                btn_telefono,
-                btn_crear_cuenta,
-            ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            alignment=ft.MainAxisAlignment.SPACE_EVENLY,
-            spacing=12,
-        ),
-        width=360,
-        height=680,
+        content=contenido,
+        expand=True,
         bgcolor=ft.Colors.SURFACE,
         border_radius=40,
         padding=25,
@@ -111,6 +91,6 @@ def login_view(page: ft.Page):
 
     return ft.Container(
         content=tarjeta_movil,
-        alignment=ft.Alignment.CENTER,
         expand=True,
+        padding=ft.Padding.symmetric(horizontal=16, vertical=12),
     )
