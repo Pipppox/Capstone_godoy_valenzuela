@@ -53,5 +53,5 @@ para ejecutar normal
 
 
 flet build apk -v
-
+flet build apk -v --product "StockIN"
 
