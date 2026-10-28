@@ -3,7 +3,7 @@ from pathlib import Path
 import flet as ft
 
 from database.db import conexion
-from services import estadisticas
+from services import estadisticas, sesion, ventas
 from services import productos as srv_productos
 from services import inventario_io
 from views.inventario_view import _obtener_picker
@@ -500,6 +500,81 @@ def dashboard_view(page: ft.Page):
         on_click=mostrar_exportar,
         ink=True,
     )
+        # ---------- Limpiar historial de ventas ----------
+    mensaje_limpiar = ft.Text("", size=12, color=ft.Colors.RED_400, text_align=ft.TextAlign.CENTER)
+    panel_limpiar = ft.Container(visible=False)
+
+    def mostrar_limpiar(e):
+        panel_limpiar.visible = not panel_limpiar.visible
+        mensaje_limpiar.value = ""
+        page.update()
+
+    async def confirmar_limpiar(e):
+        uid = (sesion.usuario() or {}).get("id")
+        try:
+            ventas.limpiar_historial(uid)
+        except Exception as err:
+            print(f"[LIMPIAR] Error: {err!r}")
+            mensaje_limpiar.value = f"No se pudo limpiar el historial: {err}"
+            page.update()
+            return
+
+        panel_limpiar.visible = False
+        page.update()
+        # Recarga el dashboard para que muestre los datos actualizados
+        await page.push_route("/index")
+        await page.push_route("/dashboard")
+
+    panel_limpiar.content = ft.Container(
+        content=ft.Column(
+            controls=[
+                ft.Text("¿Limpiar el historial de ventas?", size=13,
+                        weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
+                ft.Text("Se borrarán las ventas de 'Mejores lugares' e 'Historial por lugar'. "
+                        "Tus productos no se eliminan.",
+                        size=11, color=ft.Colors.ON_SURFACE_VARIANT,
+                        text_align=ft.TextAlign.CENTER),
+                ft.Row(
+                    controls=[
+                        boton_formato("Sí, limpiar", ft.Icons.DELETE_SWEEP,
+                                      ft.Colors.RED_700, confirmar_limpiar),
+                        boton_formato("Cancelar", ft.Icons.CLOSE,
+                                      ft.Colors.GREY_700, mostrar_limpiar),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    spacing=10,
+                ),
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=10,
+        ),
+        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
+        border_radius=14,
+        padding=14,
+        border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
+    )
+
+    btn_limpiar = ft.Container(
+        content=ft.Row(
+            controls=[
+                ft.Row(
+                    controls=[
+                        ft.Icon(ft.Icons.DELETE_SWEEP, color=ft.Colors.RED_400, size=20),
+                        ft.Text("Limpiar historial de ventas", size=13,
+                                weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
+                    ],
+                    spacing=12,
+                ),
+                ft.Icon(ft.Icons.CHEVRON_RIGHT, color=ft.Colors.ON_SURFACE_VARIANT, size=20),
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+        ),
+        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
+        border_radius=14,
+        padding=ft.Padding.symmetric(horizontal=16, vertical=14),
+        on_click=mostrar_limpiar,
+        ink=True,
+    )
 
     # ---------- Barra inferior ----------
     barra_inferior = ft.Container(
@@ -543,6 +618,10 @@ def dashboard_view(page: ft.Page):
                         btn_exportar,
                         panel_exportar,
                         mensaje_exportar,
+                        ft.Divider(height=8, color=ft.Colors.TRANSPARENT),
+                        btn_limpiar,
+                        panel_limpiar,
+                        mensaje_limpiar,
                     ],
                     spacing=0,
                     scroll=ft.ScrollMode.AUTO,

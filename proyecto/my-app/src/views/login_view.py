@@ -28,24 +28,24 @@ def login_view(page: ft.Page):
             ft.Text("Stock", size=35, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
             ft.Text("IN", size=35, weight=ft.FontWeight.BOLD, color=ft.Colors.ORANGE_800),
         ],
-        alignment=ft.MainAxisAlignment.START,
+        alignment=ft.MainAxisAlignment.CENTER,
         spacing=0,
     )
 
     # Slogan
     slogan = ft.Column(
         controls=[
-            ft.Text("'Nunca te quedes", size=32, weight=ft.FontWeight.W_600, color=ft.Colors.ON_SURFACE),
+            ft.Text("\"Nunca te quedes", size=25, weight=ft.FontWeight.W_600, color=ft.Colors.ON_SURFACE),
             ft.Row(
                 controls=[
-                    ft.Text("OUT ", size=32, weight=ft.FontWeight.BOLD, color=ft.Colors.ORANGE_800),
-                    ft.Text("de Stock\"", size=32, weight=ft.FontWeight.W_600, color=ft.Colors.ON_SURFACE),
+                    ft.Text("OUT ", size=26, weight=ft.FontWeight.BOLD, color=ft.Colors.ORANGE_800),
+                    ft.Text("de Stock\"", size=25, weight=ft.FontWeight.W_600, color=ft.Colors.ON_SURFACE),
                 ],
-                alignment=ft.MainAxisAlignment.START,
+                alignment=ft.MainAxisAlignment.CENTER,
                 spacing=0,
             ),
         ],
-        horizontal_alignment=ft.CrossAxisAlignment.START,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         spacing=0,
     )
 
@@ -67,7 +67,11 @@ def login_view(page: ft.Page):
     contenido = ft.Column(
         controls=[
             ilustracion,
-            ft.Column(controls=[titulo_brand, slogan], spacing=8),
+            ft.Column(
+                controls=[titulo_brand, slogan],
+                spacing=8,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
             ft.Column(
                 controls=[btn_email, btn_telefono, btn_crear_cuenta],
                 spacing=12,

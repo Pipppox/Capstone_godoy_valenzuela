@@ -10,7 +10,7 @@ def eliminar_cuenta_view(page: ft.Page):
     usuario = sesion.usuario() or {}
 
     async def volver(e):
-        await page.push_route("/index")
+        await page.push_route("/configuracion")
 
     txt_email = ft.TextField(
         label="Correo electrónico",
@@ -30,7 +30,10 @@ def eliminar_cuenta_view(page: ft.Page):
     mensaje = ft.Text("", size=13, color=ft.Colors.RED_400, text_align=ft.TextAlign.CENTER)
 
     # ---------- Paneles ----------
-    panel_formulario = ft.Column(spacing=0)
+    panel_formulario = ft.Column(
+        spacing=0,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+    )
     panel_confirmacion = ft.Column(visible=False, spacing=0)
 
     def mostrar_confirmacion(e):

@@ -7,12 +7,13 @@ from components.campo_direccion import CampoDireccion
 
 def vender_view(page: ft.Page):
     async def volver(e):
-        await page.push_route("/index")
+        await page.push_route("/inventario")
 
     lista = productos.listar()
 
     dd_producto = ft.Dropdown(
         label="Producto a vender",
+        width=float("inf"),
         border_color=ft.Colors.OUTLINE,
         color=ft.Colors.ON_SURFACE,
         options=[
@@ -149,12 +150,14 @@ def vender_view(page: ft.Page):
 
     if lista:
         cuerpo = ft.Column(
+            horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
             controls=[
                 ft.Row(
                     controls=[
-                        ft.Text("Producto ", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ORANGE_800),
-                        ft.Text("a vender", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
+                        ft.Text("Producto ", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.ORANGE_800),
+                        ft.Text("a vender", size=15, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
                     ],
+                    alignment=ft.MainAxisAlignment.CENTER,
                     spacing=0,
                 ),
                 ft.Divider(height=4, color=ft.Colors.TRANSPARENT),
@@ -166,6 +169,7 @@ def vender_view(page: ft.Page):
         )
     else:
         cuerpo = ft.Column(
+            horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
             controls=[
                 ft.Text("No tienes productos para vender.", size=13, color=ft.Colors.ON_SURFACE_VARIANT),
             ],

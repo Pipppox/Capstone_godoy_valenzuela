@@ -81,3 +81,12 @@ def ventas_del_dia() -> dict:
         ).fetchone()
 
     return {"monto": fila["monto"], "unidades": fila["unidades"]}
+
+def limpiar_historial(usuario_id: int) -> int:
+    """Borra todas las ventas del usuario. Los productos no se tocan."""
+    with conexion() as conn:
+        cursor = conn.execute(
+            "DELETE FROM ventas WHERE usuario_id = ?",
+            (usuario_id,),
+        )
+        return cursor.rowcount
