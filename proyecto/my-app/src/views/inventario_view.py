@@ -121,6 +121,72 @@ def inventario_view(page: ft.Page):
         panel_confirmar.visible = False
         page.update()
 
+
+
+
+        # ---------- Eliminar todos ----------
+    panel_confirmar_eliminar_todo = ft.Container(visible=False)
+
+    def pedir_eliminar_todo(e):
+        panel_confirmar_eliminar_todo.content = ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Icon(ft.Icons.DELETE_FOREVER, color=ft.Colors.RED_400, size=50),
+                    ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+                    ft.Text("¿Eliminar TODOS los productos?",
+                            size=16, weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.WHITE, text_align=ft.TextAlign.CENTER),
+                    ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
+                    ft.Text("Se eliminarán todos los productos\ny sus ventas asociadas.\nEsta acción es irreversible.",
+                            size=12, color=ft.Colors.GREY_400, text_align=ft.TextAlign.CENTER),
+                    ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
+                    ft.Button(
+                        content=ft.Text("Sí, eliminar todo", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                        bgcolor=ft.Colors.RED_700,
+                        width=200,
+                        height=42,
+                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=25)),
+                        on_click=confirmar_eliminar_todo,
+                    ),
+                    ft.Divider(height=6, color=ft.Colors.TRANSPARENT),
+                    ft.Button(
+                        content=ft.Text("Cancelar", weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                        bgcolor=ft.Colors.GREY_700,
+                        width=200,
+                        height=42,
+                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=25)),
+                        on_click=cancelar_eliminar_todo,
+                    ),
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=0,
+            ),
+            bgcolor=ft.Colors.BLACK,
+            border_radius=14,
+            padding=30,
+            border=ft.Border.all(2, ft.Colors.RED_700),
+        )
+        panel_confirmar_eliminar_todo.visible = True
+        panel_lista.visible = False
+        page.update()
+
+    def confirmar_eliminar_todo(e):
+        try:
+            cantidad = productos.eliminar_todos()
+            mensaje.color = ft.Colors.GREEN_400
+            mensaje.value = f"{cantidad} productos eliminados."
+        except ValueError as err:
+            mensaje.color = ft.Colors.RED_400
+            mensaje.value = str(err)
+        panel_confirmar_eliminar_todo.visible = False
+        panel_lista.visible = True
+        refrescar()
+
+    def cancelar_eliminar_todo(e):
+        panel_confirmar_eliminar_todo.visible = False
+        panel_lista.visible = True
+        page.update()
+
     # ---------- Editar producto ----------
     panel_editar = ft.Container(visible=False)
     producto_editando = {"id": None}
@@ -586,6 +652,7 @@ def inventario_view(page: ft.Page):
             ft.Divider(height=8, color=ft.Colors.TRANSPARENT),
             boton_accion("Agregar Producto", ft.Icons.ADD_BOX, ft.Colors.ORANGE_800, ir_a_agregar),
             boton_accion("Vender Producto", ft.Icons.SELL, ft.Colors.RED_400, ir_a_vender),
+            boton_accion("Eliminar todo", ft.Icons.DELETE_SWEEP, ft.Colors.RED_400, pedir_eliminar_todo),
             boton_accion("Exportar inventario", ft.Icons.FILE_DOWNLOAD, ft.Colors.GREEN_400, mostrar_exportar),
             panel_exportar,
             boton_accion("Importar inventario", ft.Icons.FILE_UPLOAD, ft.Colors.BLUE_400, importar),
@@ -602,7 +669,7 @@ def inventario_view(page: ft.Page):
         content=ft.Column(
             controls=[
                 ft.Column(
-                    controls=[panel_lista, panel_editar],
+                    controls=[panel_lista, panel_editar, panel_confirmar_eliminar_todo],
                     expand=True,
                 ),
                 barra_inferior,

@@ -142,3 +142,28 @@ def actualizar(producto_id: int, codigo: str, nombre: str, categoria: str, preci
                WHERE id = ? AND usuario_id = ? AND activo = 1""",
             (codigo, nombre, categoria, precio, stock, producto_id, uid),
         )
+
+# ---------- Eliminación de todos los productos ----------
+def eliminar_todos() -> int:
+    """Elimina todos los productos del usuario actual y sus ventas asociadas.
+    Devuelve la cantidad de productos eliminados."""
+    uid = _usuario_id()
+    if uid is None:
+        raise ValueError("Debes iniciar sesión.")
+
+    with conexion() as conn:
+        cantidad = conn.execute(
+            "SELECT COUNT(*) AS n FROM productos WHERE usuario_id = ?", (uid,)
+        ).fetchone()["n"]
+
+        if cantidad == 0:
+            raise ValueError("No tienes productos para eliminar.")
+
+        conn.execute(
+            "DELETE FROM ventas WHERE usuario_id = ?", (uid,)
+        )
+        conn.execute(
+            "DELETE FROM productos WHERE usuario_id = ?", (uid,)
+        )
+
+    return cantidad
