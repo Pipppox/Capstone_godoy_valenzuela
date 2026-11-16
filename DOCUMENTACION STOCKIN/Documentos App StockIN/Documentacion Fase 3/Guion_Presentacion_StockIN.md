@@ -1,14 +1,12 @@
-# Guión de Presentación — StockIN
+# Guión de Presentación  StockIN
 
-**Defensa de Portafolio de Título · Duoc UC**
+**Defensa**
 
 ---
 
 &nbsp;
 
 ## Diapositiva 1 — Portada
-
-**Quién habla:** Juan
 
 **Qué decir:**
 
@@ -98,29 +96,21 @@
 
 **Qué decir:**
 
-"La arquitectura de la app sigue un patrón de tres capas bien definido."
+"La arquitectura de la aplicación sigue un patrón de tres capas bien definido."
 
-"En la capa de presentación tenemos la interfaz construida con Flet, que es un framework basado en Flutter que permite crear interfaces nativas desde Python. Esto fue una decisión estratégica: nos permitió desarrollar en un solo lenguaje, Python, que es el que mejor manejamos."
+"En la capa de presentación tenemos la interfaz construida con Flet, que es un framework basado en Flutter que permite crear interfaces nativas desde Python. Esto fue una decisión estratégica, ya que nos permitió desarrollar en un solo lenguaje, que es el que mejor manejamos."
 
-"La capa de lógica de negocio contiene los controladores que manejan las reglas del inventario: validaciones de stock, cálculos de totales en ventas, actualización automática de cantidades,etc"
+"La capa de lógica de negocio contiene los controladores que manejan las reglas del inventario como validaciones de stock y  cálculos de totales en ventas.
 
-“La capa de datos utiliza SQLite como base de datos local en el dispositivo, lo que permite que la app funcione completamente offline. Para los respaldos en la nube, utilizamos Supabase, donde los datos se almacenan cifrados. Y para la funcionalidad de mapas y geolocalización, nos conectamos con las APIs de Google: Geocoding para convertir direcciones en coordenadas, Places para el autocompletado de direcciones, y Map Tiles para el mapa interactivo.”
+“La capa de datos utiliza SQLite como base de datos local en el dispositivo, lo que permite que la app funcione completamente offline. Para los respaldos en la nube, utilizamos Supabase, donde los datos se almacenan cifrados. Y para la funcionalidad de mapas y geolocalización, nos conectamos con las APIs de Google: Places para el autocompletado de direcciones y Map Tiles para el mapa interactivo.”
 
-"Además, implementamos Row Level Security en Supabase, lo que significa que cada usuario solo puede ver y modificar sus propios datos. Esto es crítico para una aplicación multiusuario."
+**PBKDF2-HMAC-SHA256 (200K iteraciones)** es el algoritmo que se usa para proteger las contraseñas. En vez de guardar la contraseña tal cual, la transforma en un código irreconocible mediante un proceso matemático que se repite 200.000 veces.
 
-**PBKDF2-HMAC-SHA256 (200K iteraciones)** es el algoritmo que usa para proteger las contraseñas. En vez de guardar la contraseña tal cual (“miClave123”), la transforma en un código irreconocible mediante un proceso matemático que se repite 200.000 veces. Así, aunque alguien acceda a la base de datos, no puede saber cuál era la contraseña original.
-
-**Sal aleatoria de 16 bytes por contraseña** es un complemento de lo anterior. Antes de transformar cada contraseña, se le agrega un texto aleatorio único (la “sal”). Esto significa que si dos usuarios tienen la misma contraseña, el código guardado es distinto para cada uno. Los 16 bytes son el largo de esa sal — suficiente para que sea prácticamente imposible que se repita.
-
-**Si te preguntan en la defensa**, una respuesta corta sería: “Las contraseñas se almacenan hasheadas con PBKDF2 a 200 mil iteraciones, cada una con su propia sal aleatoria, por lo que no se guardan en texto plano. Y los respaldos de datos se cifran con Fernet, donde la clave de cifrado se deriva de la contraseña del usuario, asegurando que solo él pueda restaurar su información.”
-
-&nbsp;
+**Sal aleatoria de 16 bytes por contraseña** es un complemento de lo anterior. Antes de transformar cada contraseña, se le agrega un texto aleatorio único (la “sal”). Esto significa que si dos usuarios tienen la misma contraseña, el código guardado es distinto para cada uno. Los 16 bytes son el largo de esa sal.
 
 ---
 
 ## Diapositiva 9 — Modelo de Datos
-
-&nbsp;
 
 **Qué decir:**
 
@@ -134,8 +124,6 @@ Nuestro modelo de datos utiliza una base de datos relacional SQLite almacenada l
 
 “Además de las cinco tablas locales, el respaldo en la nube se guarda en Supabase, en la tabla respaldos, donde los datos se almacenan cifrados con Fernet. Los importes se guardan como números enteros y la integridad referencial se apoya en claves foráneas con borrado en cascada.”
 
-Punto clave: Si preguntan por qué SQLite y no directamente Supabase para todo, es porque la app funciona offline — los datos viven en el dispositivo y el respaldo en la nube es una capa adicional de seguridad, no una dependencia.
-
 ---
 
 ## Diapositiva 10 — Tecnologías Utilizadas
@@ -148,31 +136,33 @@ Punto clave: Si preguntan por qué SQLite y no directamente Supabase para todo, 
 
 "Python como lenguaje principal, porque es el que mejor dominamos y tiene un ecosistema muy completo. Flet como framework de interfaz, que nos permitió crear una app móvil nativa usando solo Python, sin necesidad de aprender Dart o Kotlin.&nbsp;
 
-Supabase como backend, proporcionando PostgreSQL, autenticación y APIs REST. Y GitHub como plataforma de control de versiones y colaboración."
+SqLite que es la base de datos relacional local de la aplicación, para funcionamiento offline.
 
-"Esta combinación nos dio una ventaja importante: todo el equipo podía trabajar en la misma base de código, en el mismo lenguaje, lo que redujo la curva de aprendizaje y los errores de integración."
+Supabase como almacenamiento en la nube.&nbsp;
+
+Google maps como Api, para la geolocalización de ventas y visualización en mapa.
+
+Pandas y OpenpyXl para importar/exportar inventario en excel
+
+y GitHub como plataforma de control de versiones y colaboración."
 
 ---
 
 ## Diapositiva 11 — Ciclos de Pruebas
 
-&nbsp;
-
 **Qué decir:**
 
 "Una de las partes que más nos enorgullece es el proceso de pruebas. Realizamos cuatro ciclos completos de testing, y estos son los resultados."
 
-"Ejecutamos un total de 83 casos de prueba, cubriendo funcionalidad, usabilidad, seguridad y rendimiento. Durante los ciclos detectamos 22 defectos, de los cuales resolvimos todos. Eso nos da una tasa de corrección del 100%."
+"Ejecutamos un total de 83 test automatizados con pytest y 60 casos de prueba, cubriendo funcionalidad, usabilidad, seguridad, rendimiento, validaciones y lógica de negocio. Durante los ciclos detectamos 22 defectos, de los cuales resolvimos todos. Eso nos da una tasa de corrección del 100%."
 
-"Los ciclos fueron incrementales: en el primero encontramos la mayor cantidad de errores, como era esperable. En cada ciclo posterior los defectos se fueron reduciendo, lo que confirma que nuestro proceso de corrección fue efectivo."
+En el primer ciclo encontramos la mayor cantidad de errores, como era esperable. En cada ciclo posterior los defectos se fueron reduciendo, lo que confirma que nuestro proceso de corrección fue efectivo."
 
-"Probamos en tres dispositivos distintos: un Samsung Galaxy S25 Ultra como gama alta, un Xiaomi 12 Lite como gama media, y un Samsung Galaxy Tab S4 como gama baja. Esto nos permitió validar el rendimiento en diferentes niveles de hardware."
+"Realizamos las pruebas en tres dispositivos distintos: Samsung Galaxy S25 Ultra como gama alta, Xiaomi 12 Lite como gama media, y Samsung Galaxy Tab S4 como gama baja. Esto nos permitió validar el rendimiento en diferentes niveles de hardware."
 
 ---
 
 ## Diapositiva 12 — Demostración: Pantallas principales
-
-&nbsp;
 
 **Qué decir:**
 
@@ -186,25 +176,21 @@ Supabase como backend, proporcionando PostgreSQL, autenticación y APIs REST. Y 
 
 ## Diapositiva 14 — Cumplimiento de Requisitos
 
-&nbsp;
-
 **Qué decir:**
 
 "Esta diapositiva es quizás la más importante para la evaluación. Aquí se demuestra que cumplimos con absolutamente todos los requisitos definidos."
 
-"30 de 30 requisitos funcionales cumplidos. Esto incluye desde las operaciones CRUD básicas hasta funcionalidades más complejas como el dashboard con gráficos, la gestión de categorías, y el historial de transacciones."
+"30 de 30 requisitos funcionales cumplidos. Esto incluye desde las operaciones CRUD básicas hasta funcionalidades más complejas como el dashboard con gráficos, la gestión de categorías y el historial de transacciones."
 
-"20 de 20 requisitos no funcionales cumplidos. Esto abarca rendimiento, seguridad, usabilidad, compatibilidad y portabilidad. Cada uno fue verificado con casos de prueba específicos."
+"20 de 20 requisitos no funcionales cumplidos. Esto abarca rendimiento, seguridad, usabilidad, compatibilidad y portabilidad.
 
 “30 de 30 historias de usuarios , una por requisito funcional”
 
-"Esto nos da un cumplimiento total del 100% en ambas categorías, lo que valida que el alcance definido al inicio del proyecto se respetó íntegramente."
+"Esto nos da un cumplimiento total del 100%, lo que valida que el alcance definido al inicio del proyecto se respetó íntegramente."
 
 ---
 
 ## Diapositiva 15 — Lecciones Aprendidas
-
-&nbsp;
 
 **Qué decir:**
 
@@ -224,7 +210,7 @@ Supabase como backend, proporcionando PostgreSQL, autenticación y APIs REST. Y 
 
 "Para cerrar, StockIN cumple con el objetivo que nos propusimos: es una aplicación móvil funcional, segura y accesible que permite a microemprendedores gestionar su inventario de forma eficiente."
 
-"Creemos que la aplicación tiene potencial de crecimiento. Como trabajo futuro, se podrían agregar funcionalidades como reportes exportables, integración con medios de pago, y soporte para otros sistemas como ios.
+"Creemos que la aplicación tiene potencial de crecimiento. Como trabajo futuro, se podrían agregar funcionalidades como integración con medios de pago y soporte para otros sistemas como ios.
 
 "Agradecemos su tiempo y atención. Estamos a su disposición para cualquier pregunta."
 
