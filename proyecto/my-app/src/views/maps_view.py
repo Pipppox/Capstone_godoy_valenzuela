@@ -1,5 +1,3 @@
-import webbrowser
-
 import flet as ft
 
 from services.geocoding import generar_url_google_maps
@@ -10,26 +8,42 @@ def maps_view(page: ft.Page):
     async def volver(e):
         await page.push_route("/index")
 
+    # Servicio para abrir enlaces (funciona en PC y en Android)
+    url_launcher = ft.UrlLauncher()
+    page.services.append(url_launcher)
+
+    async def abrir_en_navegador(e):
+        await url_launcher.launch_url(generar_url_google_maps([]))
+
     # ---------- Encabezado ----------
     encabezado = ft.Row(
         controls=[
-            ft.IconButton(icon=ft.Icons.ARROW_BACK, icon_color=ft.Colors.ON_SURFACE,
-                          icon_size=22, on_click=volver),
-            ft.Text("Maps", size=20, weight=ft.FontWeight.BOLD,
-                    color=ft.Colors.ON_SURFACE, text_align=ft.TextAlign.CENTER),
-            ft.Container(width=40),
+            ft.IconButton(
+                icon=ft.Icons.ARROW_BACK,
+                icon_color=ft.Colors.ON_SURFACE,
+                icon_size=22,
+                on_click=volver,
+            ),
+            ft.Text(
+                "Maps",
+                size=22,
+                weight=ft.FontWeight.BOLD,
+                color=ft.Colors.ON_SURFACE,
+            ),
         ],
-        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         vertical_alignment=ft.CrossAxisAlignment.CENTER,
+        spacing=4,
     )
 
-    # ---------- Mapa para navegar (Google Maps) ----------
-    mapa = crear_mapa(alto=500)
+    # ---------- Mapa dentro de una tarjeta redondeada ----------
+    mapa = ft.Container(
+        content=crear_mapa(alto=480),
+        border_radius=16,
+        clip_behavior=ft.ClipBehavior.HARD_EDGE,
+        expand=True,
+    )
 
-    # ---------- Botón abrir en Google Maps ----------
-    def abrir_en_navegador(e):
-        webbrowser.open(generar_url_google_maps([]))
-
+    # ---------- Botón ----------
     btn_abrir_maps = ft.Button(
         content=ft.Row(
             controls=[
@@ -41,35 +55,24 @@ def maps_view(page: ft.Page):
             spacing=10,
         ),
         bgcolor=ft.Colors.BLUE_600,
-        width=250,
-        height=42,
+        height=48,
         style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=25)),
         on_click=abrir_en_navegador,
     )
 
-    # ---------- Tarjeta Celular ----------
-    tarjeta_movil = ft.Container(
-        content=ft.Column(
-            controls=[
-                encabezado,
-                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
-                mapa,
-                ft.Divider(height=16, color=ft.Colors.TRANSPARENT),
-                btn_abrir_maps,
-            ],
-            spacing=0,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-        ),
-        width=360,
-        height=680,
-        bgcolor=ft.Colors.SURFACE,
-        border_radius=40,
-        padding=ft.Padding.only(left=22, right=22, top=22, bottom=6),
-        border=ft.Border.all(2, ft.Colors.OUTLINE_VARIANT),
+    contenido = ft.Column(
+        controls=[encabezado, mapa, btn_abrir_maps],
+        spacing=16,
+        expand=True,
+        horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
     )
 
-    return ft.Container(
-        content=tarjeta_movil,
-        alignment=ft.Alignment.CENTER,
+    pantalla = ft.Container(
+        content=contenido,
+        bgcolor=ft.Colors.SURFACE_CONTAINER_LOW,
+        padding=ft.Padding.only(left=20, right=20, top=16, bottom=20),
         expand=True,
     )
+
+    # SafeArea evita que el contenido quede bajo la barra de navegación del celular
+    return ft.SafeArea(content=pantalla, expand=True)

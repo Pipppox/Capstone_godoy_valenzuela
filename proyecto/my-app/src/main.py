@@ -54,9 +54,11 @@ def main(page: ft.Page):
     }
 
     def construir_view(route: str, builder) -> ft.View:
+        # SafeArea evita que el contenido quede bajo la barra de estado
+        # y la barra de navegación del celular
         return ft.View(
             route=route,
-            controls=[builder(page)],
+            controls=[ft.SafeArea(content=builder(page), expand=True)],
             bgcolor=ft.Colors.SURFACE_CONTAINER_LOWEST,
             padding=0,
         )

@@ -15,14 +15,16 @@ def resumen() -> dict:
         return _vacio()
 
     with conexion() as conn:
-        # Total productos
+               # Total productos (solo activos)
         total = conn.execute(
-            "SELECT COUNT(*) AS n FROM productos WHERE usuario_id = ?", (uid,)
+            "SELECT COUNT(*) AS n FROM productos WHERE usuario_id = ? AND activo = 1",
+            (uid,),
         ).fetchone()["n"]
 
-        # Stock bajo
+        # Stock bajo (solo activos)
         bajo = conn.execute(
-            "SELECT COUNT(*) AS n FROM productos WHERE usuario_id = ? AND stock <= ?",
+            """SELECT COUNT(*) AS n FROM productos
+               WHERE usuario_id = ? AND activo = 1 AND stock <= ?""",
             (uid, STOCK_MINIMO),
         ).fetchone()["n"]
 
