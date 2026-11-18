@@ -71,7 +71,7 @@ def inventario_view(page: ft.Page):
 
     def pedir_confirmar_eliminar(producto):
         def handler(e):
-            producto_a_eliminar["id"] = producto["id"]
+            producto_a_eliminar["id"] = producto["id_producto"]
             producto_a_eliminar["nombre"] = producto["nombre"]
             panel_confirmar.content = ft.Column(
                 controls=[
@@ -200,7 +200,7 @@ def inventario_view(page: ft.Page):
 
     def abrir_editar(producto):
         def handler(e):
-            producto_editando["id"] = producto["id"]
+            producto_editando["id"] = producto["id_producto"]
             txt_edit_codigo.value = producto["codigo"]
             txt_edit_nombre.value = producto["nombre"]
             txt_edit_categoria.value = producto["categoria"]

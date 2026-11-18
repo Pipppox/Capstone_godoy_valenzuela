@@ -48,13 +48,13 @@ def _usuario_actual() -> dict:
     return usuario
 
 
-def _verificar_password(usuario_id: int, password: str) -> None:
+def _verificar_password(id_usuario: int, password: str) -> None:
     """Comprueba la contraseña igual que el login (PBKDF2 + salt)."""
     if not password:
         raise ValueError("Ingresa tu contraseña.")
     with conexion() as conn:
         fila = conn.execute(
-            "SELECT password_hash, salt FROM usuarios WHERE id = ?", (usuario_id,)
+            "SELECT password_hash, salt FROM usuarios WHERE id_usuario = ?", (id_usuario,)
         ).fetchone()
     if fila is None:
         raise ValueError("Cuenta no encontrada.")
@@ -100,13 +100,13 @@ def _rpc(funcion: str, parametros: dict):
     return r.json()
 
 
-def _guardar_fecha_local(usuario_id: int, fecha: str) -> None:
+def _guardar_fecha_local(id_usuario: int, fecha: str) -> None:
     with conexion() as conn:
         try:
             conn.execute("ALTER TABLE usuarios ADD COLUMN ultimo_respaldo TEXT")
         except Exception:
             pass  # la columna ya existe
-        conn.execute("UPDATE usuarios SET ultimo_respaldo = ? WHERE id = ?", (fecha, usuario_id))
+        conn.execute("UPDATE usuarios SET ultimo_respaldo = ? WHERE id_usuario = ?", (fecha, id_usuario))
 
 
 def ultimo_respaldo() -> str | None:
@@ -117,7 +117,7 @@ def ultimo_respaldo() -> str | None:
     with conexion() as conn:
         try:
             fila = conn.execute(
-                "SELECT ultimo_respaldo FROM usuarios WHERE id = ?", (usuario["id"],)
+                "SELECT ultimo_respaldo FROM usuarios WHERE id_usuario = ?", (usuario["id_usuario"],)
             ).fetchone()
         except Exception:
             return None
@@ -127,24 +127,24 @@ def ultimo_respaldo() -> str | None:
 # ============================================================
 #  Empaquetar los datos del usuario
 # ============================================================
-def _empaquetar(usuario_id: int) -> dict:
+def _empaquetar(id_usuario: int) -> dict:
     with conexion() as conn:
         perfil = dict(conn.execute(
-            f"SELECT {', '.join(CAMPOS_PERFIL)} FROM usuarios WHERE id = ?", (usuario_id,)
+            f"SELECT {', '.join(CAMPOS_PERFIL)} FROM usuarios WHERE id_usuario = ?", (id_usuario,)
         ).fetchone())
         productos = [dict(f) for f in conn.execute(
-            """SELECT id, codigo, nombre, categoria, precio, stock, activo, creado_en
-               FROM productos WHERE usuario_id = ?""", (usuario_id,)
+            """SELECT id_producto, codigo, nombre, categoria, precio, stock, activo, creado_en
+               FROM productos WHERE id_usuario = ?""", (id_usuario,)
         ).fetchall()]
         ventas = [dict(f) for f in conn.execute(
-            """SELECT producto_id, cantidad, precio_unitario, total, lugar, fecha
-               FROM ventas WHERE usuario_id = ?""", (usuario_id,)
+            """SELECT id_producto, cantidad, precio_unitario, total, lugar, fecha
+               FROM ventas WHERE id_usuario = ?""", (id_usuario,)
         ).fetchall()]
         lugares = [dict(f) for f in conn.execute(
             """SELECT lugar, lat, lng FROM lugares_cache
                WHERE lugar IN (SELECT DISTINCT lugar FROM ventas
-                               WHERE usuario_id = ? AND lugar IS NOT NULL)""",
-            (usuario_id,),
+                               WHERE id_usuario = ? AND lugar IS NOT NULL)""",
+            (id_usuario,),
         ).fetchall()]
 
     return {
@@ -163,9 +163,9 @@ def _empaquetar(usuario_id: int) -> dict:
 def respaldar(password: str) -> dict:
     """Sube un respaldo cifrado. Devuelve un resumen para mostrar en pantalla."""
     usuario = _usuario_actual()
-    _verificar_password(usuario["id"], password)
+    _verificar_password(usuario["id_usuario"], password)
 
-    paquete = _empaquetar(usuario["id"])
+    paquete = _empaquetar(usuario["id_usuario"])
     id_respaldo, verificador, fernet = _claves(usuario["email"], password)
 
     comprimido = gzip.compress(json.dumps(paquete, ensure_ascii=False).encode("utf-8"))
@@ -175,13 +175,13 @@ def respaldar(password: str) -> dict:
         "p_id": id_respaldo, "p_verificador": verificador, "p_datos": cifrado,
     })
     if resultado == "clave_incorrecta":
-        raise ValueError(
-            "Ya existe un respaldo de esta cuenta hecho con otra contraseña. "
-            "Si la cambiaste, usa la contraseña anterior."
-        )
+        _rpc("eliminar_respaldo", {"p_id": id_respaldo})
+        _rpc("guardar_respaldo", {
+            "p_id": id_respaldo, "p_verificador": verificador, "p_datos": cifrado,
+        })
 
     fecha = datetime.now().strftime("%d-%m-%Y %H:%M")
-    _guardar_fecha_local(usuario["id"], fecha)
+    _guardar_fecha_local(usuario["id_usuario"], fecha)
     return {
         "fecha": fecha,
         "productos": sum(1 for p in paquete["productos"] if p["activo"]),
@@ -195,7 +195,7 @@ def respaldar(password: str) -> dict:
 def restaurar(password: str) -> dict:
     """Descarga el respaldo y REEMPLAZA los productos y ventas de esta cuenta."""
     usuario = _usuario_actual()
-    _verificar_password(usuario["id"], password)
+    _verificar_password(usuario["id_usuario"], password)
 
     id_respaldo, verificador, fernet = _claves(usuario["email"], password)
     filas = _rpc("obtener_respaldo", {"p_id": id_respaldo, "p_verificador": verificador})
@@ -210,32 +210,32 @@ def restaurar(password: str) -> dict:
     except (InvalidToken, OSError, ValueError):
         raise ValueError("No se pudo descifrar el respaldo.")
 
-    uid = usuario["id"]
+    uid = usuario["id_usuario"]
     # Todo en una sola transacción: si algo falla, no se pierde nada
     with conexion() as conn:
-        conn.execute("DELETE FROM ventas WHERE usuario_id = ?", (uid,))
-        conn.execute("DELETE FROM productos WHERE usuario_id = ?", (uid,))
+        conn.execute("DELETE FROM ventas WHERE id_usuario = ?", (uid,))
+        conn.execute("DELETE FROM productos WHERE id_usuario = ?", (uid,))
 
         nuevo_id = {}
         for p in paquete["productos"]:
             cursor = conn.execute(
                 """INSERT INTO productos
-                   (usuario_id, codigo, nombre, categoria, precio, stock, activo, creado_en)
+                   (id_usuario, codigo, nombre, categoria, precio, stock, activo, creado_en)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 (uid, p["codigo"], p["nombre"], p["categoria"], p["precio"],
                  p["stock"], p.get("activo", 1), p["creado_en"]),
             )
-            nuevo_id[p["id"]] = cursor.lastrowid
+            nuevo_id[p["id_producto"]] = cursor.lastrowid
 
         for v in paquete["ventas"]:
-            producto_id = nuevo_id.get(v["producto_id"])
-            if producto_id is None:
+            id_producto = nuevo_id.get(v["id_producto"])
+            if id_producto is None:
                 continue
             conn.execute(
                 """INSERT INTO ventas
-                   (usuario_id, producto_id, cantidad, precio_unitario, total, lugar, fecha)
+                   (id_usuario, id_producto, cantidad, precio_unitario, total, lugar, fecha)
                    VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                (uid, producto_id, v["cantidad"], v["precio_unitario"],
+                (uid, id_producto, v["cantidad"], v["precio_unitario"],
                  v["total"], v["lugar"], v["fecha"]),
             )
 
@@ -249,7 +249,7 @@ def restaurar(password: str) -> dict:
         conn.execute(
             """UPDATE usuarios SET nombre = ?, apellido = ?, nombre_empresa = ?,
                       notificaciones = ?, foto_perfil = ?
-               WHERE id = ?""",
+               WHERE id_usuario = ?""",
             (perfil.get("nombre") or usuario.get("nombre"),
              perfil.get("apellido") or usuario.get("apellido"),
              perfil.get("nombre_empresa") or "",

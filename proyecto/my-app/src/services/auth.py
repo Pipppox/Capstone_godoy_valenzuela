@@ -113,7 +113,7 @@ def restablecer_password(email: str, telefono: str, nueva_password: str) -> None
 
     with conexion() as conn:
         fila = conn.execute(
-            "SELECT id FROM usuarios WHERE email = ? AND telefono = ?",
+            "SELECT id_usuario FROM usuarios WHERE email = ? AND telefono = ?",
             (email, telefono),
         ).fetchone()
 
@@ -124,8 +124,8 @@ def restablecer_password(email: str, telefono: str, nueva_password: str) -> None
         password_hash = _hashear(nueva_password, salt)
 
         conn.execute(
-            "UPDATE usuarios SET password_hash = ?, salt = ? WHERE id = ?",
-            (password_hash, salt.hex(), fila["id"]),
+            "UPDATE usuarios SET password_hash = ?, salt = ? WHERE id_usuario = ?",
+            (password_hash, salt.hex(), fila["id_usuario"]),
         )
 
 def eliminar_cuenta(email: str, password: str) -> None:
@@ -147,18 +147,18 @@ def eliminar_cuenta(email: str, password: str) -> None:
         if not hmac.compare_digest(hash_ingresado, fila["password_hash"]):
             raise ValueError("Contraseña incorrecta.")
 
-        conn.execute("DELETE FROM ventas WHERE usuario_id = ?", (fila["id"],))
-        conn.execute("DELETE FROM productos WHERE usuario_id = ?", (fila["id"],))
-        conn.execute("DELETE FROM usuarios WHERE id = ?", (fila["id"],))        
+        conn.execute("DELETE FROM ventas WHERE id_usuario = ?", (fila["id_usuario"],))
+        conn.execute("DELETE FROM productos WHERE id_usuario = ?", (fila["id_usuario"],))
+        conn.execute("DELETE FROM usuarios WHERE id_usuario = ?", (fila["id_usuario"],))
 
-def actualizar_foto(usuario_id: int, ruta_foto: str) -> None:
+def actualizar_foto(id_usuario: int, ruta_foto: str) -> None:
     with conexion() as conn:
         conn.execute(
-            "UPDATE usuarios SET foto_perfil = ? WHERE id = ?",
-            (ruta_foto, usuario_id),
+            "UPDATE usuarios SET foto_perfil = ? WHERE id_usuario = ?",
+            (ruta_foto, id_usuario),
         )
 
-def actualizar_datos(usuario_id: int, nombre: str, apellido: str, email: str, telefono: str,  nombre_empresa: str = "") -> dict:
+def actualizar_datos(id_usuario: int, nombre: str, apellido: str, email: str, telefono: str,  nombre_empresa: str = "") -> dict:
     """Actualiza los datos del usuario. Devuelve el usuario actualizado."""
     nombre = (nombre or "").strip()
     apellido = (apellido or "").strip()
@@ -177,35 +177,35 @@ def actualizar_datos(usuario_id: int, nombre: str, apellido: str, email: str, te
 
     with conexion() as conn:
         duplicado_email = conn.execute(
-            "SELECT 1 FROM usuarios WHERE email = ? AND id != ?",
-            (email, usuario_id),
+            "SELECT 1 FROM usuarios WHERE email = ? AND id_usuario != ?",
+            (email, id_usuario),
         ).fetchone()
         if duplicado_email:
             raise ValueError("Ese correo ya está en uso por otra cuenta.")
 
         duplicado_tel = conn.execute(
-            "SELECT 1 FROM usuarios WHERE telefono = ? AND id != ?",
-            (telefono, usuario_id),
+            "SELECT 1 FROM usuarios WHERE telefono = ? AND id_usuario != ?",
+            (telefono, id_usuario),
         ).fetchone()
         if duplicado_tel:
             raise ValueError("Ese teléfono ya está en uso por otra cuenta.")
 
         conn.execute(
             """UPDATE usuarios SET nombre = ?, apellido = ?, email = ?, telefono = ?, nombre_empresa = ?
-               WHERE id = ?""",
-            (nombre, apellido, email, telefono, nombre_empresa, usuario_id),
+               WHERE id_usuario = ?""",
+            (nombre, apellido, email, telefono, nombre_empresa, id_usuario),
         )
 
-        fila = conn.execute("SELECT * FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
+        fila = conn.execute("SELECT * FROM usuarios WHERE id_usuario = ?", (id_usuario,)).fetchone()
 
     usuario = dict(fila)
     usuario.pop("password_hash")
     usuario.pop("salt")
     return usuario
 
-def actualizar_notificaciones(usuario_id: int, activadas: bool) -> None:
+def actualizar_notificaciones(id_usuario: int, activadas: bool) -> None:
     with conexion() as conn:
         conn.execute(
-            "UPDATE usuarios SET notificaciones = ? WHERE id = ?",
-            (1 if activadas else 0, usuario_id),
+            "UPDATE usuarios SET notificaciones = ? WHERE id_usuario = ?",
+            (1 if activadas else 0, id_usuario),
         )

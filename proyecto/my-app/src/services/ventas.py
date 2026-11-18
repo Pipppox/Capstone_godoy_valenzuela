@@ -3,10 +3,10 @@ from services import sesion
 
 
 def _usuario_id() -> int | None:
-    return (sesion.usuario() or {}).get("id")
+    return (sesion.usuario() or {}).get("id_usuario")
 
 
-def registrar(producto_id, cantidad, lugar="") -> dict:
+def registrar(id_producto, cantidad, lugar="") -> dict:
     """Registra una venta y descuenta el stock.
     Devuelve un resumen. Lanza ValueError con un mensaje para la pantalla.
     La geocodificación del lugar la hace la vista (CampoDireccion) antes de llamar aquí."""
@@ -14,7 +14,7 @@ def registrar(producto_id, cantidad, lugar="") -> dict:
     if uid is None:
         raise ValueError("Debes iniciar sesión.")
 
-    if not producto_id:
+    if not id_producto:
         raise ValueError("Selecciona un producto.")
 
     try:
@@ -27,8 +27,8 @@ def registrar(producto_id, cantidad, lugar="") -> dict:
 
     with conexion() as conn:
         producto = conn.execute(
-            "SELECT * FROM productos WHERE id = ? AND usuario_id = ? AND activo = 1",
-            (producto_id, uid),
+            "SELECT * FROM productos WHERE id_producto = ? AND id_usuario = ? AND activo = 1",
+            (id_producto, uid),
         ).fetchone()
 
         if producto is None:
@@ -43,15 +43,15 @@ def registrar(producto_id, cantidad, lugar="") -> dict:
 
         conn.execute(
             """INSERT INTO ventas
-               (usuario_id, producto_id, cantidad, precio_unitario, total, lugar)
+               (id_usuario, id_producto, cantidad, precio_unitario, total, lugar)
                VALUES (?, ?, ?, ?, ?, ?)""",
-            (uid, producto_id, cantidad, producto["precio"], total,
+            (uid, id_producto, cantidad, producto["precio"], total,
              (lugar or "").strip() or None),
         )
 
         conn.execute(
-            "UPDATE productos SET stock = stock - ? WHERE id = ?",
-            (cantidad, producto_id),
+            "UPDATE productos SET stock = stock - ? WHERE id_producto = ?",
+            (cantidad, id_producto),
         )
 
         stock_nuevo = producto["stock"] - cantidad
@@ -76,17 +76,17 @@ def ventas_del_dia() -> dict:
             """SELECT COALESCE(SUM(total), 0) AS monto,
                       COALESCE(SUM(cantidad), 0) AS unidades
                FROM ventas
-               WHERE usuario_id = ? AND date(fecha) = date('now', 'localtime')""",
+               WHERE id_usuario = ? AND date(fecha) = date('now', 'localtime')""",
             (uid,),
         ).fetchone()
 
     return {"monto": fila["monto"], "unidades": fila["unidades"]}
 
-def limpiar_historial(usuario_id: int) -> int:
+def limpiar_historial(id_usuario: int) -> int:
     """Borra todas las ventas del usuario. Los productos no se tocan."""
     with conexion() as conn:
         cursor = conn.execute(
-            "DELETE FROM ventas WHERE usuario_id = ?",
-            (usuario_id,),
+            "DELETE FROM ventas WHERE id_usuario = ?",
+            (id_usuario,),
         )
         return cursor.rowcount

@@ -101,15 +101,15 @@ def geocodificar_y_guardar(lugar: str) -> dict | None:
 # ============================================================
 #  MARCADORES Y ENLACES
 # ============================================================
-def obtener_marcadores(usuario_id: int = None) -> list[dict]:
+def obtener_marcadores(id_usuario: int = None) -> list[dict]:
     """Devuelve los lugares donde vendió el usuario, con coordenadas."""
     with conexion() as conn:
-        if usuario_id:
+        if id_usuario:
             # Obtener lugares distintos de las ventas del usuario
             lugares_usuario = conn.execute(
                 """SELECT DISTINCT lugar FROM ventas
-                   WHERE usuario_id = ? AND lugar IS NOT NULL AND lugar != ''""",
-                (usuario_id,),
+                   WHERE id_usuario = ? AND lugar IS NOT NULL AND lugar != ''""",
+                (id_usuario,),
             ).fetchall()
 
             marcadores = []

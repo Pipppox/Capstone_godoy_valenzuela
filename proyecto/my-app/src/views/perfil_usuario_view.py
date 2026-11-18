@@ -48,7 +48,7 @@ def perfil_usuario_view(page: ft.Page):
 
     def aplicar_foto(valor: str):
         """Guarda la foto, actualiza la sesión y vuelve al perfil."""
-        actualizar_foto(usuario["id"], valor)
+        actualizar_foto(usuario["id_usuario"], valor)
         usuario["foto_perfil"] = valor
         sesion.iniciar(usuario)  # así las demás pantallas ven la foto nueva
         contenedor_foto.content = construir_avatar(valor)

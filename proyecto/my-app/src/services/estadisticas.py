@@ -5,7 +5,7 @@ STOCK_MINIMO = 2
 
 
 def _uid() -> int | None:
-    return (sesion.usuario() or {}).get("id")
+    return (sesion.usuario() or {}).get("id_usuario")
 
 
 def resumen() -> dict:
@@ -17,14 +17,14 @@ def resumen() -> dict:
     with conexion() as conn:
                # Total productos (solo activos)
         total = conn.execute(
-            "SELECT COUNT(*) AS n FROM productos WHERE usuario_id = ? AND activo = 1",
+            "SELECT COUNT(*) AS n FROM productos WHERE id_usuario = ? AND activo = 1",
             (uid,),
         ).fetchone()["n"]
 
         # Stock bajo (solo activos)
         bajo = conn.execute(
             """SELECT COUNT(*) AS n FROM productos
-               WHERE usuario_id = ? AND activo = 1 AND stock <= ?""",
+               WHERE id_usuario = ? AND activo = 1 AND stock <= ?""",
             (uid, STOCK_MINIMO),
         ).fetchone()["n"]
 
@@ -33,7 +33,7 @@ def resumen() -> dict:
             """SELECT COALESCE(SUM(total), 0) AS monto,
                       COALESCE(SUM(cantidad), 0) AS unidades
                FROM ventas
-               WHERE usuario_id = ? AND date(fecha) = date('now', 'localtime')""",
+               WHERE id_usuario = ? AND date(fecha) = date('now', 'localtime')""",
             (uid,),
         ).fetchone()
 
@@ -41,9 +41,9 @@ def resumen() -> dict:
         top = conn.execute(
             """SELECT p.nombre, COALESCE(SUM(v.cantidad), 0) AS total_vendido
                FROM ventas v
-               JOIN productos p ON p.id = v.producto_id
-               WHERE v.usuario_id = ?
-               GROUP BY v.producto_id
+               JOIN productos p ON p.id_producto = v.id_producto
+               WHERE v.id_usuario = ?
+               GROUP BY v.id_producto
                ORDER BY total_vendido DESC
                LIMIT 1""",
             (uid,),
@@ -53,10 +53,10 @@ def resumen() -> dict:
         top_semana = conn.execute(
             """SELECT p.nombre, COALESCE(SUM(v.cantidad), 0) AS total_vendido
                FROM ventas v
-               JOIN productos p ON p.id = v.producto_id
-               WHERE v.usuario_id = ?
+               JOIN productos p ON p.id_producto = v.id_producto
+               WHERE v.id_usuario = ?
                  AND date(v.fecha) >= date('now', 'localtime', '-7 days')
-               GROUP BY v.producto_id
+               GROUP BY v.id_producto
                ORDER BY total_vendido DESC
                LIMIT 1""",
             (uid,),
@@ -68,7 +68,7 @@ def resumen() -> dict:
                       COALESCE(SUM(total), 0) AS monto,
                       COALESCE(SUM(cantidad), 0) AS unidades
                FROM ventas
-               WHERE usuario_id = ?
+               WHERE id_usuario = ?
                  AND date(fecha) >= date('now', 'localtime', '-7 days')
                GROUP BY date(fecha)
                ORDER BY dia""",
@@ -79,8 +79,8 @@ def resumen() -> dict:
         categorias = conn.execute(
             """SELECT p.categoria, COALESCE(SUM(v.cantidad), 0) AS total_vendido
                FROM ventas v
-               JOIN productos p ON p.id = v.producto_id
-               WHERE v.usuario_id = ?
+               JOIN productos p ON p.id_producto = v.id_producto
+               WHERE v.id_usuario = ?
                GROUP BY p.categoria
                ORDER BY total_vendido DESC
                LIMIT 5""",
@@ -89,12 +89,12 @@ def resumen() -> dict:
 
                 # Mejores lugares de venta
         lugares = conn.execute(
-            """SELECT lugar, 
+            """SELECT lugar,
                       COALESCE(SUM(total), 0) AS monto,
                       COALESCE(SUM(cantidad), 0) AS unidades,
                       COUNT(*) AS num_ventas
                FROM ventas
-               WHERE usuario_id = ? AND lugar IS NOT NULL AND lugar != ''
+               WHERE id_usuario = ? AND lugar IS NOT NULL AND lugar != ''
                GROUP BY lugar
                ORDER BY monto DESC
                LIMIT 5""",
@@ -108,9 +108,9 @@ def resumen() -> dict:
                       SUM(v.cantidad) AS total_vendido,
                       SUM(v.total) AS monto
                FROM ventas v
-               JOIN productos p ON p.id = v.producto_id
-               WHERE v.usuario_id = ? AND v.lugar IS NOT NULL AND v.lugar != ''
-               GROUP BY v.lugar, v.producto_id
+               JOIN productos p ON p.id_producto = v.id_producto
+               WHERE v.id_usuario = ? AND v.lugar IS NOT NULL AND v.lugar != ''
+               GROUP BY v.lugar, v.id_producto
                ORDER BY v.lugar, total_vendido DESC""",
             (uid,),
         ).fetchall()
@@ -123,9 +123,9 @@ def resumen() -> dict:
                       SUM(v.cantidad) AS unidades,
                       SUM(v.total) AS monto
                FROM ventas v
-               JOIN productos p ON p.id = v.producto_id
-               WHERE v.usuario_id = ? AND v.lugar IS NOT NULL AND v.lugar != ''
-               GROUP BY date(v.fecha), v.lugar, v.producto_id
+               JOIN productos p ON p.id_producto = v.id_producto
+               WHERE v.id_usuario = ? AND v.lugar IS NOT NULL AND v.lugar != ''
+               GROUP BY date(v.fecha), v.lugar, v.id_producto
                ORDER BY date(v.fecha) DESC, monto DESC""",
             (uid,),
         ).fetchall()
@@ -142,7 +142,7 @@ def resumen() -> dict:
         "lugares": [dict(f) for f in lugares],
         "top_por_lugar": [dict(f) for f in top_por_lugar],
         "historial_lugares": [dict(f) for f in historial_lugares],
-        
+
     }
 
 
