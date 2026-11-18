@@ -24,7 +24,7 @@ def modo_oscuro() -> bool:
         with conexion() as conn:
             _asegurar_columna(conn)
             fila = conn.execute(
-                "SELECT modo_oscuro FROM usuarios WHERE id = ?", (usuario["id"],)
+                "SELECT modo_oscuro FROM usuarios WHERE id_usuario = ?", (usuario["id_usuario"],)
             ).fetchone()
         return bool(fila["modo_oscuro"]) if fila else True
     except Exception as err:
@@ -41,8 +41,8 @@ def guardar_modo_oscuro(activado: bool) -> None:
         with conexion() as conn:
             _asegurar_columna(conn)
             conn.execute(
-                "UPDATE usuarios SET modo_oscuro = ? WHERE id = ?",
-                (1 if activado else 0, usuario["id"]),
+                "UPDATE usuarios SET modo_oscuro = ? WHERE id_usuario = ?",
+                (1 if activado else 0, usuario["id_usuario"]),
             )
         usuario["modo_oscuro"] = 1 if activado else 0
     except Exception as err:

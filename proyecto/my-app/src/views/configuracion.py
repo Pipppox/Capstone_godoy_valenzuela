@@ -18,7 +18,7 @@ def configuracion_view(page: ft.Page):
     notif_activas = bool(usuario.get("notificaciones", 0))
 
     def toggle_notificaciones(e):
-        actualizar_notificaciones(usuario["id"], switch_notif.value)
+        actualizar_notificaciones(usuario["id_usuario"], switch_notif.value)
         usuario["notificaciones"] = 1 if switch_notif.value else 0
         sesion.iniciar(usuario)
 
@@ -300,7 +300,7 @@ def configuracion_view(page: ft.Page):
         mensaje_editar.color = ft.Colors.RED_400
         try:
             usuario_actualizado = actualizar_datos(
-                usuario["id"],
+                usuario["id_usuario"],
                 txt_nombre.value,
                 txt_apellido.value,
                 txt_email.value,

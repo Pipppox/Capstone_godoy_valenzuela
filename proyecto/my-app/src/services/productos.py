@@ -7,7 +7,7 @@ STOCK_MINIMO = 2
 
 
 def _usuario_id() -> int | None:
-    return (sesion.usuario() or {}).get("id")
+    return (sesion.usuario() or {}).get("id_usuario")
 
 
 # ---------- Consultas ----------
@@ -18,7 +18,7 @@ def listar() -> list[dict]:
         return []
     with conexion() as conn:
         filas = conn.execute(
-            "SELECT * FROM productos WHERE usuario_id = ? AND activo = 1 ORDER BY nombre",
+            "SELECT * FROM productos WHERE id_usuario = ? AND activo = 1 ORDER BY nombre",
             (uid,),
         ).fetchall()
     return [dict(f) for f in filas]
@@ -79,21 +79,21 @@ def crear(codigo, nombre, categoria, precio, stock) -> None:
 
     with conexion() as conn:
         existe = conn.execute(
-            "SELECT 1 FROM productos WHERE usuario_id = ? AND codigo = ? AND activo = 1",
+            "SELECT 1 FROM productos WHERE id_usuario = ? AND codigo = ? AND activo = 1",
             (uid, codigo),
         ).fetchone()
         if existe:
             raise ValueError(f"Ya tienes un producto con el código {codigo}.")
 
         conn.execute(
-            """INSERT INTO productos (usuario_id, codigo, nombre, categoria, precio, stock)
+            """INSERT INTO productos (id_usuario, codigo, nombre, categoria, precio, stock)
                VALUES (?, ?, ?, ?, ?, ?)""",
             (uid, codigo, nombre, categoria, precio, stock),
         )
 
 
 # ---------- Baja (eliminación suave) ----------
-def eliminar(producto_id: int) -> None:
+def eliminar(id_producto: int) -> None:
     """Oculta el producto sin borrar sus ventas.
     Así el historial, el dashboard y el mapa de lugares se mantienen."""
     uid = _usuario_id()
@@ -102,8 +102,8 @@ def eliminar(producto_id: int) -> None:
 
     with conexion() as conn:
         producto = conn.execute(
-            "SELECT id FROM productos WHERE id = ? AND usuario_id = ? AND activo = 1",
-            (producto_id, uid),
+            "SELECT id_producto FROM productos WHERE id_producto = ? AND id_usuario = ? AND activo = 1",
+            (id_producto, uid),
         ).fetchone()
         if producto is None:
             raise ValueError("El producto no existe.")
@@ -114,14 +114,14 @@ def eliminar(producto_id: int) -> None:
             """UPDATE productos
                SET activo = 0,
                    stock = 0,
-                   codigo = codigo || '#ELIM' || id
-               WHERE id = ?""",
-            (producto_id,),
+                   codigo = codigo || '#ELIM' || id_producto
+               WHERE id_producto = ?""",
+            (id_producto,),
         )
 
 
 # ---------- Modificación ----------
-def actualizar(producto_id: int, codigo: str, nombre: str, categoria: str, precio, stock) -> None:
+def actualizar(id_producto: int, codigo: str, nombre: str, categoria: str, precio, stock) -> None:
     uid = _usuario_id()
     if uid is None:
         raise ValueError("Debes iniciar sesión.")
@@ -131,16 +131,16 @@ def actualizar(producto_id: int, codigo: str, nombre: str, categoria: str, preci
     with conexion() as conn:
         duplicado = conn.execute(
             """SELECT 1 FROM productos
-               WHERE usuario_id = ? AND codigo = ? AND id != ? AND activo = 1""",
-            (uid, codigo, producto_id),
+               WHERE id_usuario = ? AND codigo = ? AND id_producto != ? AND activo = 1""",
+            (uid, codigo, id_producto),
         ).fetchone()
         if duplicado:
             raise ValueError(f"Ya tienes otro producto con el código {codigo}.")
 
         conn.execute(
             """UPDATE productos SET codigo = ?, nombre = ?, categoria = ?, precio = ?, stock = ?
-               WHERE id = ? AND usuario_id = ? AND activo = 1""",
-            (codigo, nombre, categoria, precio, stock, producto_id, uid),
+               WHERE id_producto = ? AND id_usuario = ? AND activo = 1""",
+            (codigo, nombre, categoria, precio, stock, id_producto, uid),
         )
 
 # ---------- Eliminación de todos los productos ----------
@@ -153,17 +153,17 @@ def eliminar_todos() -> int:
 
     with conexion() as conn:
         cantidad = conn.execute(
-            "SELECT COUNT(*) AS n FROM productos WHERE usuario_id = ?", (uid,)
+            "SELECT COUNT(*) AS n FROM productos WHERE id_usuario = ?", (uid,)
         ).fetchone()["n"]
 
         if cantidad == 0:
             raise ValueError("No tienes productos para eliminar.")
 
         conn.execute(
-            "DELETE FROM ventas WHERE usuario_id = ?", (uid,)
+            "DELETE FROM ventas WHERE id_usuario = ?", (uid,)
         )
         conn.execute(
-            "DELETE FROM productos WHERE usuario_id = ?", (uid,)
+            "DELETE FROM productos WHERE id_usuario = ?", (uid,)
         )
 
     return cantidad

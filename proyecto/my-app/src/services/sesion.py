@@ -12,10 +12,10 @@ _usuario_actual: dict | None = None
 def _asegurar_tabla(conn) -> None:
     conn.execute("""
         CREATE TABLE IF NOT EXISTS sesion_local (
-            id         INTEGER PRIMARY KEY CHECK (id = 1),
-            usuario_id INTEGER NOT NULL,
-            iniciada   TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
-            FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+            id_sesion    INTEGER PRIMARY KEY CHECK (id_sesion = 1),
+            id_usuario   INTEGER NOT NULL,
+            iniciada     TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+            FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
         )
     """)
 
@@ -28,8 +28,8 @@ def iniciar(usuario: dict) -> None:
         with conexion() as conn:
             _asegurar_tabla(conn)
             conn.execute(
-                "INSERT OR REPLACE INTO sesion_local (id, usuario_id) VALUES (1, ?)",
-                (usuario["id"],),
+                "INSERT OR REPLACE INTO sesion_local (id_sesion, id_usuario) VALUES (1, ?)",
+                (usuario["id_usuario"],),
             )
     except Exception as err:
         print(f"[SESION] No se pudo recordar la sesión: {err!r}")
@@ -55,8 +55,8 @@ def restaurar() -> bool:
             _asegurar_tabla(conn)
             fila = conn.execute(
                 """SELECT u.* FROM sesion_local s
-                   JOIN usuarios u ON u.id = s.usuario_id
-                   WHERE s.id = 1"""
+                   JOIN usuarios u ON u.id_usuario = s.id_usuario
+                   WHERE s.id_sesion = 1"""
             ).fetchone()
     except Exception as err:
         print(f"[SESION] No se pudo restaurar la sesión: {err!r}")

@@ -18,7 +18,7 @@ def vender_view(page: ft.Page):
         color=ft.Colors.ON_SURFACE,
         options=[
             ft.dropdown.Option(
-                key=str(p["id"]),
+                key=str(p["id_producto"]),
                 text=f'{p["codigo"]} - {p["nombre"]} ({p["stock"]} u.)',
             )
             for p in lista
@@ -89,7 +89,7 @@ def vender_view(page: ft.Page):
         # ---- Refrescar formulario ----
         dd_producto.options = [
             ft.dropdown.Option(
-                key=str(p["id"]),
+                key=str(p["id_producto"]),
                 text=f'{p["codigo"]} - {p["nombre"]} ({p["stock"]} u.)',
             )
             for p in productos.listar()

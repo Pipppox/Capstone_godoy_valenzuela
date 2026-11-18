@@ -54,7 +54,7 @@ def dashboard_view(page: ft.Page):
         vertical_alignment=ft.CrossAxisAlignment.CENTER,
     )
 
-   
+
 
     # ---------- Gráfico de ventas ----------
     dias_7 = data["ultimos_7_dias"]
@@ -181,8 +181,8 @@ def dashboard_view(page: ft.Page):
         with conexion() as conn:
             for p in lista_productos:
                 vendido = conn.execute(
-                    "SELECT COALESCE(SUM(cantidad), 0) AS total FROM ventas WHERE producto_id = ?",
-                    (p["id"],),
+                    "SELECT COALESCE(SUM(cantidad), 0) AS total FROM ventas WHERE id_producto = ?",
+                    (p["id_producto"],),
                 ).fetchone()["total"]
                 monto_vendido = vendido * p["precio"]
                 productos_con_ventas.append({**p, "vendido": vendido, "monto_vendido": monto_vendido})
@@ -332,7 +332,7 @@ def dashboard_view(page: ft.Page):
             border_radius=14,
             padding=18,
         )
-            # ---------- Historial por lugar ----------
+        # ---------- Historial por lugar ----------
     historial = data["historial_lugares"]
 
     if historial:
@@ -510,7 +510,7 @@ def dashboard_view(page: ft.Page):
         page.update()
 
     async def confirmar_limpiar(e):
-        uid = (sesion.usuario() or {}).get("id")
+        uid = (sesion.usuario() or {}).get("id_usuario")
         try:
             ventas.limpiar_historial(uid)
         except Exception as err:

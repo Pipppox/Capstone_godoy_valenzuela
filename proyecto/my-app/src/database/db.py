@@ -47,7 +47,7 @@ def init_db():
     with conexion() as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
-                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_usuario    INTEGER PRIMARY KEY AUTOINCREMENT,
                 nombre        TEXT NOT NULL,
                 apellido      TEXT NOT NULL,
                 email         TEXT NOT NULL UNIQUE,
@@ -59,8 +59,8 @@ def init_db():
         """)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS productos (
-                id         INTEGER PRIMARY KEY AUTOINCREMENT,
-                usuario_id INTEGER NOT NULL,
+                id_producto INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_usuario INTEGER NOT NULL,
                 codigo     TEXT NOT NULL,
                 nombre     TEXT NOT NULL,
                 categoria  TEXT NOT NULL,
@@ -68,27 +68,27 @@ def init_db():
                 stock      INTEGER NOT NULL,
                 activo     INTEGER NOT NULL DEFAULT 1,
                 creado_en  TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
-                UNIQUE (usuario_id, codigo),
-                FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+                UNIQUE (id_usuario, codigo),
+                FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
             )
         """)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS ventas (
-                id             INTEGER PRIMARY KEY AUTOINCREMENT,
-                usuario_id     INTEGER NOT NULL,
-                producto_id    INTEGER NOT NULL,
+                id_venta       INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_usuario     INTEGER NOT NULL,
+                id_producto    INTEGER NOT NULL,
                 cantidad       INTEGER NOT NULL,
                 precio_unitario INTEGER NOT NULL,
                 total          INTEGER NOT NULL,
                 lugar          TEXT,
                 fecha          TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
-                FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
-                FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE CASCADE
+                FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+                FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON DELETE CASCADE
             )
         """)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS lugares_cache (
-                id    INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_lugar INTEGER PRIMARY KEY AUTOINCREMENT,
                 lugar TEXT NOT NULL UNIQUE,
                 lat   REAL NOT NULL,
                 lng   REAL NOT NULL
@@ -102,6 +102,7 @@ def init_db():
         # Eliminación suave: 1 = visible, 0 = eliminado (se conservan sus ventas)
         _agregar_columna(conn, "productos", "activo INTEGER NOT NULL DEFAULT 1")
 
-        filas = conn.execute("SELECT id, email, telefono FROM usuarios").fetchall()
+        filas = conn.execute("SELECT id_usuario, email, telefono FROM usuarios").fetchall()
         print(f"[DB] Archivo: {DB_PATH}")
         print(f"[DB] Usuarios registrados: {[dict(f) for f in filas]}")
+            

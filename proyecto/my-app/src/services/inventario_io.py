@@ -166,7 +166,7 @@ def analizar(nombre: str, datos: bytes | None) -> dict:
         if existente is None:
             nuevos.append(producto)
         elif _clave_nombre(existente["nombre"]) == _clave_nombre(nombre_p):
-            actualizar.append({"id": existente["id"], **producto})
+            actualizar.append({"id_producto": existente["id_producto"], **producto})
         else:
             conflictos.append(
                 f'Fila {numero}: el código {codigo} ya es "{existente["nombre"]}" '
@@ -196,7 +196,7 @@ def aplicar(analisis: dict) -> dict:
     for p in analisis["actualizar"]:
         try:
             productos.actualizar(
-                p["id"], p["codigo"], p["nombre"], p["categoria"], p["precio"], p["stock"],
+                p["id_producto"], p["codigo"], p["nombre"], p["categoria"], p["precio"], p["stock"],
             )
             actualizados += 1
         except ValueError as err:
@@ -232,8 +232,8 @@ def _ventas_usuario() -> list[dict]:
                       v.cantidad, v.precio_unitario, v.total,
                       COALESCE(v.lugar, '') AS lugar, p.activo
                FROM ventas v
-               JOIN productos p ON p.id = v.producto_id
-               WHERE v.usuario_id = ?
+               JOIN productos p ON p.id_producto = v.id_producto
+               WHERE v.id_usuario = ?
                ORDER BY v.fecha DESC""",
             (uid,),
         ).fetchall()
